@@ -88,7 +88,7 @@ export class HistogramNode extends RenderNode {
         if (properties['showXMajorTicks']) {
             const ticks = properties['xMajorTickSpacing'] > 0 
                 ? getTickValues(xMin, xMax, properties['xMajorTickSpacing'])
-                : getTickValues(xMin, xMax, (xMax - xMin) / 5);
+                : binCenters;
                 
             svg += renderXAxis({
                 scale: xScale,
