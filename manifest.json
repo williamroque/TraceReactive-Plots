@@ -1,0 +1,8 @@
+{
+  "id": "com.tracereactive.plots",
+  "name": "Plots",
+  "version": "1.0.0",
+  "description": "Charts and plots: line, scatter, bar, histogram, box plot, area, pie/donut, heatmap, expression, and parametric plotting.",
+  "main": "dist/index.js",
+  "permissions": []
+}
