@@ -22,7 +22,9 @@ export function closeChartFrame(svg: string, title: string, width: number, axisC
     svg += `</g>`;
     
     if (title) {
-        svg += `<text class="plot-title" x="${width / 2}" y="20" text-anchor="middle" fill="${axisColor}" font-family="${fontFamily}" font-size="${titleFontSize}px">${title}</text>`;
+        const safeFont = fontFamily.replace(/"/g, '&quot;');
+        const safeTitle = title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        svg += `<text class="plot-title" x="${width / 2}" y="20" text-anchor="middle" fill="${axisColor}" font-family="${safeFont}" font-size="${titleFontSize}px">${safeTitle}</text>`;
     }
     
     svg += `</svg>`;

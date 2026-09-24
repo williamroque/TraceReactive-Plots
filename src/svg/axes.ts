@@ -14,7 +14,8 @@ export interface AxisConfig {
 }
 
 export function renderXAxis(config: AxisConfig): string {
-    let svg = `<g class="x-axis" transform="translate(0,${config.innerH})" font-family="${config.fontFamily}" font-size="${config.fontSize}" fill="${config.axisColor}">`;
+    const safeFont = config.fontFamily.replace(/"/g, '&quot;');
+    let svg = `<g class="x-axis" transform="translate(0,${config.innerH})" font-family="${safeFont}" font-size="${config.fontSize}" fill="${config.axisColor}">`;
     svg += `<line x1="0" y1="0" x2="${config.innerW}" y2="0" stroke="${config.axisColor}" stroke-width="${config.axisThickness}" />`;
     
     config.ticks.forEach(tick => {
@@ -38,7 +39,8 @@ export function renderXAxis(config: AxisConfig): string {
 }
 
 export function renderYAxis(config: AxisConfig): string {
-    let svg = `<g class="y-axis" font-family="${config.fontFamily}" font-size="${config.fontSize}" fill="${config.axisColor}">`;
+    const safeFont = config.fontFamily.replace(/"/g, '&quot;');
+    let svg = `<g class="y-axis" font-family="${safeFont}" font-size="${config.fontSize}" fill="${config.axisColor}">`;
     svg += `<line x1="0" y1="0" x2="0" y2="${config.innerH}" stroke="${config.axisColor}" stroke-width="${config.axisThickness}" />`;
     
     config.ticks.forEach(tick => {
