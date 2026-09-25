@@ -33,10 +33,39 @@ export function computeNiceDomain(data: number[]): [number, number] {
 
 export function getTickValues(min: number, max: number, spacing: number): number[] {
     if (spacing <= 0) return [];
+    
+    // Fix precision issues that can cause infinite loops or skipped ticks
+    const epsilon = 1e-10;
     const ticks = [];
-    const start = Math.ceil(min / spacing) * spacing;
-    for (let i = start; i <= max + 1e-9; i += spacing) {
-        ticks.push(i);
+    
+    let start = Math.ceil((min - epsilon) / spacing) * spacing;
+    // Fix floating point math quirks with zero
+    if (Math.abs(start) < epsilon) start = 0;
+    
+    for (let i = start; i <= max + epsilon; i += spacing) {
+        // Round to prevent floating point accumulation like 0.30000000000000004
+        ticks.push(Number(i.toPrecision(12)));
     }
     return ticks;
+}
+
+export function getAutoTickSpacing(min: number, max: number, maxTicks: number = 5): number {
+    const span = max - min;
+    if (span === 0) return 1;
+    
+    const rawStep = span / maxTicks;
+    const mag = Math.floor(Math.log10(rawStep));
+    const magPow = Math.pow(10, mag);
+    const magMsd = Math.round(rawStep / magPow);
+    
+    let stepSize = magPow;
+    if (magMsd > 5.0) {
+        stepSize = 10 * magPow;
+    } else if (magMsd > 2.0) {
+        stepSize = 5 * magPow;
+    } else if (magMsd > 1.0) {
+        stepSize = 2 * magPow;
+    }
+    
+    return Number(stepSize.toPrecision(15));
 }

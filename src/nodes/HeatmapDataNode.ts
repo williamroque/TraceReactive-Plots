@@ -144,13 +144,12 @@ export class HeatmapDataNode extends RenderNode {
         
         svg = closeChartFrame(svg, properties['title'], totalW, labelColor, fontFamily, properties['plotTitleFontSize']);
         
-        const renderData = { type: 'core:svg', content: svg };
+        const renderData: any = { type: 'core:svg', content: svg };
+        renderData._domain = createDomainMetadata(0, colLabels.length, 0, rowLabels.length);
+        renderData._plotData = { xData: colLabels, yDataSeries: zData, rowLabels, seriesType: 'heatmap' };
         return {
             Render: renderData,
-            type: 'core:svg',
-            content: svg,
-            _domain: createDomainMetadata(0, colLabels.length, 0, rowLabels.length),
-            _plotData: { xData: colLabels, yDataSeries: zData, rowLabels, seriesType: 'heatmap' }
+            ...renderData
         };
     }
 }

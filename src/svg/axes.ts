@@ -11,6 +11,7 @@ export interface AxisConfig {
     gridColor?: string;
     gridThickness?: number;
     showGrid?: boolean;
+    thousandsSeparator?: string;
 }
 
 export function renderXAxis(config: AxisConfig): string {
@@ -31,6 +32,11 @@ export function renderXAxis(config: AxisConfig): string {
         
         // Label
         let label = config.isCategorical ? tick : parseFloat(Number(tick).toPrecision(4)).toString();
+        if (!config.isCategorical && config.thousandsSeparator) {
+            const parts = label.split('.');
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, config.thousandsSeparator);
+            label = parts.join('.');
+        }
         svg += `<text x="${xPos}" y="20" text-anchor="middle">${label}</text>`;
     });
     
@@ -56,6 +62,11 @@ export function renderYAxis(config: AxisConfig): string {
         
         // Label
         let label = config.isCategorical ? tick : parseFloat(Number(tick).toPrecision(4)).toString();
+        if (!config.isCategorical && config.thousandsSeparator) {
+            const parts = label.split('.');
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, config.thousandsSeparator);
+            label = parts.join('.');
+        }
         svg += `<text x="-10" y="${yPos}" text-anchor="end" dominant-baseline="middle">${label}</text>`;
     });
     

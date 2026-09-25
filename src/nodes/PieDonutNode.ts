@@ -111,12 +111,11 @@ export class PieDonutNode extends RenderNode {
         
         svg = closeChartFrame(svg, properties['title'], totalW, properties['plotLabelColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
         
-        const renderData = { type: 'core:svg', content: svg };
+        const renderData: any = { type: 'core:svg', content: svg };
+        renderData._plotData = { labels, values, seriesType: 'pie' };
         return {
             Render: renderData,
-            type: 'core:svg',
-            content: svg,
-            _plotData: { labels, values, seriesType: 'pie' } // Pie doesn't use standard domain mapping
+            ...renderData
         };
     }
 }

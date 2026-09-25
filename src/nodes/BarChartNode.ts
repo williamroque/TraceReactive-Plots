@@ -1,7 +1,7 @@
 import { RenderNode } from '@tracereactive/types';
 import { PlotCategory } from '../categories';
 import { chartStyleProperties, chartAxisProperties, getColumnData, createDomainMetadata } from '../helpers';
-import { linearScale, categoricalScale, computeNiceDomain, getTickValues } from '../svg/scales';
+import { linearScale, categoricalScale, computeNiceDomain, getTickValues, getAutoTickSpacing } from '../svg/scales';
 import { createChartFrame, closeChartFrame } from '../svg/frame';
 import { renderXAxis, renderYAxis } from '../svg/axes';
 import { renderBars } from '../svg/series';
@@ -132,6 +132,8 @@ export class BarChartNode extends RenderNode {
                 ticks = uniqueX;
             } else if (properties['xMajorTickSpacing'] > 0) {
                 ticks = getTickValues(xMin, xMax, properties['xMajorTickSpacing']);
+            } else {
+                ticks = getTickValues(xMin, xMax, getAutoTickSpacing(xMin, xMax));
             }
             
             svg += renderXAxis({
@@ -145,13 +147,14 @@ export class BarChartNode extends RenderNode {
                 fontFamily: properties['plotFontFamily'],
                 fontSize: properties['plotFontSize'],
                 showGrid: false // Typically don't need vertical grids on bar charts
-            });
+            ,
+                thousandsSeparator: properties['thousandsSeparator']});
         }
         
         if (properties['showYMajorTicks']) {
             const ticks = properties['yMajorTickSpacing'] > 0 
                 ? getTickValues(yMin, yMax, properties['yMajorTickSpacing'])
-                : getTickValues(yMin, yMax, (yMax - yMin) / 5);
+                : getTickValues(yMin, yMax, getAutoTickSpacing(yMin, yMax));
                 
             svg += renderYAxis({
                 scale: yScale,
@@ -166,7 +169,8 @@ export class BarChartNode extends RenderNode {
                 gridColor: properties['plotGridColor'],
                 gridThickness: properties['plotGridThickness'],
                 showGrid: properties['showGrid']
-            });
+            ,
+                thousandsSeparator: properties['thousandsSeparator']});
         }
         
         // Series
@@ -192,13 +196,12 @@ export class BarChartNode extends RenderNode {
         
         svg = closeChartFrame(svg, properties['title'], totalW, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
         
-        const renderData = { type: 'core:svg', content: svg };
+        const renderData: any = { type: 'core:svg', content: svg };
+        renderData._domain = createDomainMetadata(xMin, xMax, yMin, yMax);
+        renderData._plotData = { xData: uniqueX, yDataSeries, seriesType: 'bar', style: { isCategoricalX, isStacked, groups } };
         return {
             Render: renderData,
-            type: 'core:svg',
-            content: svg,
-            _domain: createDomainMetadata(xMin, xMax, yMin, yMax),
-            _plotData: { xData: uniqueX, yDataSeries, seriesType: 'bar', style: { isCategoricalX, isStacked, groups } }
+            ...renderData
         };
     }
 }

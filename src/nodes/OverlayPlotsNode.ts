@@ -1,7 +1,7 @@
 import { RenderNode } from '@tracereactive/types';
 import { PlotCategory } from '../categories';
 import { chartStyleProperties, chartAxisProperties, createDomainMetadata } from '../helpers';
-import { linearScale, categoricalScale, computeNiceDomain, getTickValues } from '../svg/scales';
+import { linearScale, categoricalScale, computeNiceDomain, getTickValues, getAutoTickSpacing } from '../svg/scales';
 import { createChartFrame, closeChartFrame } from '../svg/frame';
 import { renderXAxis, renderYAxis } from '../svg/axes';
 import { renderLinePath, renderScatterPoints, renderBars, renderArea, renderConfidenceBand } from '../svg/series';
@@ -100,6 +100,8 @@ export class OverlayPlotsNode extends RenderNode {
                 ticks = categoricalXLabels;
             } else if (properties['xMajorTickSpacing'] > 0) {
                 ticks = getTickValues(globalXMin, globalXMax, properties['xMajorTickSpacing']);
+            } else {
+                ticks = getTickValues(globalXMin, globalXMax, getAutoTickSpacing(globalXMin, globalXMax));
             }
             
             svg += renderXAxis({
@@ -115,13 +117,14 @@ export class OverlayPlotsNode extends RenderNode {
                 gridColor: properties['plotGridColor'],
                 gridThickness: properties['plotGridThickness'],
                 showGrid: properties['showGrid']
-            });
+            ,
+                thousandsSeparator: properties['thousandsSeparator']});
         }
         
         if (properties['showYMajorTicks']) {
             const ticks = properties['yMajorTickSpacing'] > 0 
                 ? getTickValues(globalYMin, globalYMax, properties['yMajorTickSpacing'])
-                : getTickValues(globalYMin, globalYMax, (globalYMax - globalYMin) / 5);
+                : getTickValues(globalYMin, globalYMax, getAutoTickSpacing(globalYMin, globalYMax));
                 
             svg += renderYAxis({
                 scale: yScale,
@@ -136,7 +139,8 @@ export class OverlayPlotsNode extends RenderNode {
                 gridColor: properties['plotGridColor'],
                 gridThickness: properties['plotGridThickness'],
                 showGrid: properties['showGrid']
-            });
+            ,
+                thousandsSeparator: properties['thousandsSeparator']});
         }
         
         // 3. Re-render all series from input raw data using the unified scales

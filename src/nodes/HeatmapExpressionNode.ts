@@ -3,7 +3,7 @@ import { PlotCategory } from '../categories';
 import { createChartFrame, closeChartFrame } from '../svg/frame';
 import { renderXAxis, renderYAxis } from '../svg/axes';
 import { interpolateColor } from '../svg/colors';
-import { linearScale, computeNiceDomain, getTickValues } from '../svg/scales';
+import { linearScale, computeNiceDomain, getTickValues, getAutoTickSpacing } from '../svg/scales';
 import { chartAxisProperties } from '../helpers';
 import * as mathjs from 'mathjs';
 
@@ -141,7 +141,7 @@ export class HeatmapExpressionNode extends RenderNode {
         if (properties['showXMajorTicks']) {
             const ticks = properties['xMajorTickSpacing'] > 0 
                 ? getTickValues(xMin, xMax, properties['xMajorTickSpacing'])
-                : getTickValues(xMin, xMax, (xMax - xMin) / 5);
+                : getTickValues(xMin, xMax, getAutoTickSpacing(xMin, xMax));
                 
             svg += renderXAxis({
                 scale: xScale,
@@ -156,13 +156,14 @@ export class HeatmapExpressionNode extends RenderNode {
                 gridColor: properties['plotGridColor'],
                 gridThickness: properties['plotGridThickness'],
                 showGrid: properties['showGrid']
-            });
+            ,
+                thousandsSeparator: properties['thousandsSeparator']});
         }
         
         if (properties['showYMajorTicks']) {
             const ticks = properties['yMajorTickSpacing'] > 0 
                 ? getTickValues(yMin, yMax, properties['yMajorTickSpacing'])
-                : getTickValues(yMin, yMax, (yMax - yMin) / 5);
+                : getTickValues(yMin, yMax, getAutoTickSpacing(yMin, yMax));
                 
             svg += renderYAxis({
                 scale: yScale,
@@ -177,7 +178,8 @@ export class HeatmapExpressionNode extends RenderNode {
                 gridColor: properties['plotGridColor'],
                 gridThickness: properties['plotGridThickness'],
                 showGrid: properties['showGrid']
-            });
+            ,
+                thousandsSeparator: properties['thousandsSeparator']});
         }
         
         svg = closeChartFrame(svg, properties['title'], totalW, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);

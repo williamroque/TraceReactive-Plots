@@ -1,7 +1,7 @@
 import { RenderNode } from '@tracereactive/types';
 import { PlotCategory } from '../categories';
 import { chartStyleProperties, chartAxisProperties, createDomainMetadata, getColumnData } from '../helpers';
-import { linearScale, computeNiceDomain, getTickValues } from '../svg/scales';
+import { linearScale, computeNiceDomain, getTickValues, getAutoTickSpacing } from '../svg/scales';
 import { createChartFrame, closeChartFrame } from '../svg/frame';
 import { renderXAxis, renderYAxis } from '../svg/axes';
 import { renderScatterPoints, renderLinePath } from '../svg/series';
@@ -65,13 +65,15 @@ export class ResidualPlotNode extends RenderNode {
         const yScale = (y: number) => frame.innerH - linearScale(yMin, yMax, frame.innerH)(y);
         
         if (properties['showXMajorTicks']) {
-            const ticks = properties['xMajorTickSpacing'] > 0 ? getTickValues(xMin, xMax, properties['xMajorTickSpacing']) : getTickValues(xMin, xMax, (xMax - xMin) / 5);
-            svg += renderXAxis({ scale: xScale, ticks, isCategorical: false, innerW: frame.innerW, innerH: frame.innerH, axisColor: properties['plotAxisColor'], axisThickness: properties['plotAxisThickness'] || 1, fontFamily: properties['plotFontFamily'], fontSize: properties['plotFontSize'], gridColor: properties['plotGridColor'], gridThickness: properties['plotGridThickness'], showGrid: properties['showGrid'] });
+            const ticks = properties['xMajorTickSpacing'] > 0 ? getTickValues(xMin, xMax, properties['xMajorTickSpacing']) : getTickValues(xMin, xMax, getAutoTickSpacing(xMin, xMax));
+            svg += renderXAxis({ scale: xScale, ticks, isCategorical: false, innerW: frame.innerW, innerH: frame.innerH, axisColor: properties['plotAxisColor'], axisThickness: properties['plotAxisThickness'] || 1, fontFamily: properties['plotFontFamily'], fontSize: properties['plotFontSize'], gridColor: properties['plotGridColor'], gridThickness: properties['plotGridThickness'], showGrid: properties['showGrid'] ,
+                thousandsSeparator: properties['thousandsSeparator']});
         }
         
         if (properties['showYMajorTicks']) {
-            const ticks = properties['yMajorTickSpacing'] > 0 ? getTickValues(yMin, yMax, properties['yMajorTickSpacing']) : getTickValues(yMin, yMax, (yMax - yMin) / 5);
-            svg += renderYAxis({ scale: yScale, ticks, isCategorical: false, innerW: frame.innerW, innerH: frame.innerH, axisColor: properties['plotAxisColor'], axisThickness: properties['plotAxisThickness'] || 1, fontFamily: properties['plotFontFamily'], fontSize: properties['plotFontSize'], gridColor: properties['plotGridColor'], gridThickness: properties['plotGridThickness'], showGrid: properties['showGrid'] });
+            const ticks = properties['yMajorTickSpacing'] > 0 ? getTickValues(yMin, yMax, properties['yMajorTickSpacing']) : getTickValues(yMin, yMax, getAutoTickSpacing(yMin, yMax));
+            svg += renderYAxis({ scale: yScale, ticks, isCategorical: false, innerW: frame.innerW, innerH: frame.innerH, axisColor: properties['plotAxisColor'], axisThickness: properties['plotAxisThickness'] || 1, fontFamily: properties['plotFontFamily'], fontSize: properties['plotFontSize'], gridColor: properties['plotGridColor'], gridThickness: properties['plotGridThickness'], showGrid: properties['showGrid'] ,
+                thousandsSeparator: properties['thousandsSeparator']});
         }
         
         svg += renderLinePath([xMin, xMax], [0, 0], xScale, yScale, properties['plotSecondaryColor'] || '#FF6B6B', 1);
@@ -79,13 +81,12 @@ export class ResidualPlotNode extends RenderNode {
         
         svg = closeChartFrame(svg, properties['title'], totalW, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
         
-        const renderData = { type: 'core:svg', content: svg };
+        const renderData: any = { type: 'core:svg', content: svg };
+        renderData._domain = createDomainMetadata(xMin, xMax, yMin, yMax);
+        renderData._plotData = { xData, yDataSeries: [yData], seriesType: 'scatter' };
         return {
             Render: renderData,
-            type: 'core:svg',
-            content: svg,
-            _domain: createDomainMetadata(xMin, xMax, yMin, yMax),
-            _plotData: { xData, yDataSeries: [yData], seriesType: 'scatter' }
+            ...renderData
         };
     }
 }

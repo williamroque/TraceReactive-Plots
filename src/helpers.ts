@@ -18,7 +18,8 @@ export const chartAxisProperties: PropertyDefinition[] = [
     { name: 'xMajorTickSpacing', label: 'X Major Tick Spacing', type: 'number', defaultValue: 0 },
     { name: 'showYMajorTicks', label: 'Show Y Major Ticks', type: 'boolean', defaultValue: true },
     { name: 'yMajorTickSpacing', label: 'Y Major Tick Spacing', type: 'number', defaultValue: 0 },
-    { name: 'showGrid', label: 'Show Grid', type: 'boolean', defaultValue: true }
+    { name: 'showGrid', label: 'Show Grid', type: 'boolean', defaultValue: true },
+    { name: 'thousandsSeparator', label: 'Thousands Separator', type: 'string', defaultValue: ',' }
 ];
 
 /**
