@@ -4,7 +4,7 @@ import { chartStyleProperties, chartAxisProperties, createDomainMetadata } from 
 import { linearScale, categoricalScale, computeNiceDomain, getTickValues } from '../svg/scales';
 import { createChartFrame, closeChartFrame } from '../svg/frame';
 import { renderXAxis, renderYAxis } from '../svg/axes';
-import { renderLinePath, renderScatterPoints, renderBars, renderArea } from '../svg/series';
+import { renderLinePath, renderScatterPoints, renderBars, renderArea, renderConfidenceBand } from '../svg/series';
 
 export class OverlayPlotsNode extends RenderNode {
     readonly category = PlotCategory;
@@ -152,8 +152,15 @@ export class OverlayPlotsNode extends RenderNode {
             
             // Re-render based on type
             if (p.seriesType === 'line' && p.yDataSeries) {
-                p.yDataSeries.forEach((yData: number[]) => {
-                    const color = properties[`plotSeriesColor${(i % 6) + 1}`] || '#77E4FF';
+                p.yDataSeries.forEach((yData: number[], j: number) => {
+                    const color = properties[`plotSeriesColor${((i+j) % 6) + 1}`] || '#77E4FF';
+                    if (p.yLowerSeries && p.yUpperSeries) {
+                        const yLower = p.yLowerSeries[j];
+                        const yUpper = p.yUpperSeries[j];
+                        if (yLower && yUpper) {
+                            svg += renderConfidenceBand(xData, yLower, yUpper, xScale, yScale, color, 0.2);
+                        }
+                    }
                     svg += renderLinePath(xData, yData, xScale, yScale, color, style.lineWidth || 2);
                 });
             } 

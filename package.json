@@ -15,6 +15,8 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "mathjs": "^13.0.0"
+    "jstat": "^1.9.6",
+    "mathjs": "^13.0.0",
+    "simple-statistics": "^7.12.0"
   }
 }

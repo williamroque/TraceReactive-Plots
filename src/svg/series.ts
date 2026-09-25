@@ -256,3 +256,54 @@ export function renderPieSlices(
     
     return svg;
 }
+
+export function renderConfidenceBand(
+    xData: any[],
+    yLower: number[],
+    yUpper: number[],
+    xScale: (x: any) => number,
+    yScale: (y: number) => number,
+    color: string,
+    opacity: number
+): string {
+    let pathSvg = '';
+    let isDrawing = false;
+    let startIdx = 0;
+    
+    for (let i = 0; i < xData.length; i++) {
+        if (isNaN(yLower[i]) || isNaN(yUpper[i])) {
+            if (isDrawing) {
+                for (let j = i - 1; j >= startIdx; j--) {
+                    const bx = xScale(xData[j]);
+                    const by = yScale(yLower[j]);
+                    pathSvg += ` L ${bx},${by}`;
+                }
+                pathSvg += ' Z ';
+                isDrawing = false;
+            }
+        } else {
+            const xPos = xScale(xData[i]);
+            const yPos = yScale(yUpper[i]);
+            
+            if (!isDrawing) {
+                startIdx = i;
+                pathSvg += `M ${xPos},${yPos}`;
+                isDrawing = true;
+            } else {
+                pathSvg += ` L ${xPos},${yPos}`;
+            }
+        }
+    }
+    
+    if (isDrawing && xData.length > 0) {
+        for (let j = xData.length - 1; j >= startIdx; j--) {
+            const bx = xScale(xData[j]);
+            const by = yScale(yLower[j]);
+            pathSvg += ` L ${bx},${by}`;
+        }
+        pathSvg += ' Z';
+    }
+    
+    if (!pathSvg) return '';
+    return `<path d="${pathSvg}" fill="${color}" opacity="${opacity}" stroke="none" />`;
+}

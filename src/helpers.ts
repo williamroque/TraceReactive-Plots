@@ -2,6 +2,7 @@ import type { PropertyDefinition } from '@tracereactive/types';
 
 export const chartStyleProperties: PropertyDefinition[] = [
     { name: 'plotPrimaryColor', label: 'Primary color', type: 'style', styleType: 'color', category: 'style', defaultValue: 'theme:plotPrimaryColor' },
+    { name: 'plotSecondaryColor', label: 'Secondary color', type: 'style', styleType: 'color', category: 'style', defaultValue: '#FF6B6B' },
     { name: 'plotAxisColor', label: 'Axis color', type: 'style', styleType: 'color', category: 'style', defaultValue: 'theme:plotAxisColor' },
     { name: 'plotAxisThickness', label: 'Axis thickness', type: 'style', styleType: 'size', category: 'style', defaultValue: 'theme:plotAxisThickness' },
     { name: 'plotGridColor', label: 'Grid color', type: 'style', styleType: 'color', category: 'style', defaultValue: 'theme:plotGridColor' },

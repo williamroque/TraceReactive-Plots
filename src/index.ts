@@ -13,6 +13,8 @@ import { AreaChartNode } from './nodes/AreaChartNode';
 import { HeatmapDataNode } from './nodes/HeatmapDataNode';
 import { PieDonutNode } from './nodes/PieDonutNode';
 import { OverlayPlotsNode } from './nodes/OverlayPlotsNode';
+import { QQPlotNode } from './nodes/QQPlotNode';
+import { ResidualPlotNode } from './nodes/ResidualPlotNode';
 
 declare const traceReactive: TraceReactiveAPI;
 
@@ -28,7 +30,9 @@ const nodes = [
     new AreaChartNode(),
     new HeatmapDataNode(),
     new PieDonutNode(),
-    new OverlayPlotsNode()
+    new OverlayPlotsNode(),
+    new QQPlotNode(),
+    new ResidualPlotNode()
 ];
 
 const serializableNodes = nodes.map(n => ({
