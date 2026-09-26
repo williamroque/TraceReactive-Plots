@@ -23,7 +23,7 @@ export class OverlayPlotsNode extends RenderNode {
     ];
     
     readonly properties = [
-        { name: 'title', label: 'Title', type: 'string' as const, defaultValue: 'Overlay Plot' },
+        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'Overlay Plot' },
         { name: 'aspectRatio', label: 'Aspect Ratio', type: 'number' as const, defaultValue: 1.6 },
         ...chartStyleProperties,
         ...chartAxisProperties,
@@ -67,15 +67,16 @@ export class OverlayPlotsNode extends RenderNode {
         }
         
         // Handle nice domains for the unified bounds if they aren't categorical
+        const padding = Number(properties['plotRangePadding'] ?? 0.05);
         if (!isCategoricalX) {
             if (globalXMin === Infinity) { globalXMin = 0; globalXMax = 1; }
-            const [nXMin, nXMax] = computeNiceDomain([globalXMin, globalXMax]);
+            const [nXMin, nXMax] = computeNiceDomain([globalXMin, globalXMax], padding);
             globalXMin = nXMin;
             globalXMax = nXMax;
         }
         
         if (globalYMin === Infinity) { globalYMin = 0; globalYMax = 1; }
-        const [nYMin, nYMax] = computeNiceDomain([globalYMin, globalYMax]);
+        const [nYMin, nYMax] = computeNiceDomain([globalYMin, globalYMax], padding);
         globalYMin = nYMin;
         globalYMax = nYMax;
         
@@ -87,7 +88,7 @@ export class OverlayPlotsNode extends RenderNode {
             width: totalW,
             height: totalH,
             backgroundColor: properties['plotBackgroundColor']
-        });
+        }, properties);
         
         let svg = frame.svg;
         
@@ -145,7 +146,7 @@ export class OverlayPlotsNode extends RenderNode {
                 gridThickness: properties['plotGridThickness'],
                 showGrid: properties['showGrid'],
                 thousandsSeparator: properties['thousandsSeparator'],
-                label: properties['xLabel']
+                label: properties['yLabel']
             });
         }
         
@@ -215,7 +216,7 @@ export class OverlayPlotsNode extends RenderNode {
             svg += `</g>`;
         }
         
-        svg = closeChartFrame(svg, properties['title'], totalW, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
+        svg = closeChartFrame(svg, properties['title'], frame, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
         
         const renderData = { type: 'core:svg', content: svg };
         return {

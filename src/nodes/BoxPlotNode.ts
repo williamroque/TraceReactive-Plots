@@ -23,7 +23,7 @@ export class BoxPlotNode extends RenderNode {
     ];
     
     readonly properties = [
-        { name: 'title', label: 'Title', type: 'string' as const, defaultValue: 'Box Plot' },
+        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'Box Plot' },
         { name: 'columns', label: 'Columns to Compare (comma-sep)', type: 'string' as const, defaultValue: '' },
         { name: 'showOutliers', label: 'Show Outliers', type: 'boolean' as const, defaultValue: true },
         { name: 'aspectRatio', label: 'Aspect Ratio', type: 'number' as const, defaultValue: 1.6 },
@@ -106,13 +106,14 @@ export class BoxPlotNode extends RenderNode {
         const totalW = 600;
         const totalH = totalW / aspectRatio;
         
-        const [yMin, yMax] = computeNiceDomain([globalMin, globalMax]);
+        const padding = Number(properties['plotRangePadding'] ?? 0.05);
+        const [yMin, yMax] = computeNiceDomain([globalMin, globalMax], padding);
         
         const frame = createChartFrame({
             width: totalW,
             height: totalH,
             backgroundColor: properties['plotBackgroundColor']
-        });
+        }, properties);
         
         let svg = frame.svg;
         
@@ -133,7 +134,8 @@ export class BoxPlotNode extends RenderNode {
                 fontSize: properties['plotFontSize'],
                 showGrid: false
             ,
-                thousandsSeparator: properties['thousandsSeparator']});
+                thousandsSeparator: properties['thousandsSeparator'],
+                label: properties['xLabel']});
         }
         
         if (properties['showYMajorTicks']) {
@@ -155,7 +157,7 @@ export class BoxPlotNode extends RenderNode {
                 gridThickness: properties['plotGridThickness'],
                 showGrid: properties['showGrid'],
                 thousandsSeparator: properties['thousandsSeparator'],
-                label: properties['xLabel']
+                label: properties['yLabel']
             });
         }
         
@@ -164,10 +166,10 @@ export class BoxPlotNode extends RenderNode {
         seriesStats.forEach((stats, i) => {
             const xPos = xScale(cols[i]);
             const color = cols.length > 1 ? getSeriesColor(i, properties) : properties['plotPrimaryColor'] || getSeriesColor(0, properties);
-            svg += renderBoxPlot(stats, xPos, boxWidth, yScale, color);
+            svg += renderBoxPlot(stats, xPos, boxWidth, yScale, color, Number(properties['plotBorderThickness'] || 2), properties['plotBorderColor']);
         });
         
-        svg = closeChartFrame(svg, properties['title'], totalW, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
+        svg = closeChartFrame(svg, properties['title'], frame, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
         
         const renderData: any = { type: 'core:svg', content: svg };
         renderData._domain = createDomainMetadata(0, cols.length, yMin, yMax); // X domain is index-based for boxplots overlay

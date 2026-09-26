@@ -23,7 +23,7 @@ export class BarChartNode extends RenderNode {
     ];
     
     readonly properties = [
-        { name: 'title', label: 'Title', type: 'string' as const, defaultValue: 'Bar Chart' },
+        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'Bar Chart' },
         { name: 'xColumn', label: 'X Column', type: 'string' as const, defaultValue: '' },
         { name: 'yColumn', label: 'Y Column', type: 'string' as const, defaultValue: '' },
         { name: 'groupColumn', label: 'Group By Column (Optional)', type: 'string' as const, defaultValue: '' },
@@ -39,6 +39,7 @@ export class BarChartNode extends RenderNode {
         },
         { name: 'barGap', label: 'Bar Gap', type: 'number' as const, defaultValue: 0.2, step: 0.1, min: 0 },
         { name: 'aspectRatio', label: 'Aspect Ratio', type: 'number' as const, defaultValue: 1.6 },
+        { name: 'errorColumn', label: 'Error Column (Optional)', type: 'string' as const, defaultValue: '' },
         ...chartStyleProperties,
         ...chartAxisProperties,
         ...chartLabelProperties,
@@ -72,12 +73,19 @@ export class BarChartNode extends RenderNode {
         // Build series matrix: series[groupIndex][xIndex]
         const yDataSeries = groups.map(() => new Array(uniqueX.length).fill(0));
         
+        const errCol = String(properties['errorColumn'] || '');
+        const errDataRaw = errCol ? getColumnData(data, errCol).map(v => Number(v)) : [];
+        const errDataSeries = errCol ? groups.map(() => new Array(uniqueX.length).fill(0)) : undefined;
+        
         for (let i = 0; i < xDataRaw.length; i++) {
             const xIdx = uniqueX.indexOf(xDataRaw[i]);
             const gIdx = groupCol ? groups.indexOf(String(groupDataRaw[i])) : 0;
             if (xIdx !== -1 && gIdx !== -1) {
                 // If there are duplicates, sum them (simple pivot)
                 yDataSeries[gIdx][xIdx] += (isNaN(yDataRaw[i]) ? 0 : yDataRaw[i]);
+                if (errDataSeries && !isNaN(errDataRaw[i])) {
+                    errDataSeries[gIdx][xIdx] += errDataRaw[i];
+                }
             }
         }
 
@@ -85,9 +93,10 @@ export class BarChartNode extends RenderNode {
         
         // Domain X
         let xMin = 0, xMax = 0;
+        const padding = Number(properties['plotRangePadding'] ?? 0.05);
         if (!isCategoricalX) {
             const nums = uniqueX.map(v => Number(v));
-            [xMin, xMax] = computeNiceDomain(nums);
+            [xMin, xMax] = computeNiceDomain(nums, padding);
         }
         
         // Domain Y
@@ -98,17 +107,21 @@ export class BarChartNode extends RenderNode {
             const colSums = new Array(uniqueX.length).fill(0);
             for (let g = 0; g < groups.length; g++) {
                 for (let x = 0; x < uniqueX.length; x++) {
-                    colSums[x] += yDataSeries[g][x];
+                    colSums[x] += yDataSeries[g][x] + (errDataSeries ? errDataSeries[g][x] : 0);
                 }
             }
             yMax = Math.max(...colSums, 1);
         } else {
-            const allY = yDataSeries.flat();
-            yMax = Math.max(...allY, 1);
-            yMin = Math.min(...allY, 0); // usually bars start at 0
+            const maxVals = yDataSeries.map((series, g) => series.map((val, x) => val + (errDataSeries ? errDataSeries[g][x] : 0))).flat();
+            yMax = Math.max(...maxVals, 1);
+            yMin = Math.min(...yDataSeries.flat(), 0); // usually bars start at 0
         }
         
-        if (yMax === yMin) { yMax += 1; }
+        if (yMax === yMin) { 
+            yMax += 1; 
+        } else {
+            yMax += (yMax - yMin) * padding;
+        }
 
         const aspectRatio = Number(properties['aspectRatio']) || 1.6;
         const totalW = 600;
@@ -118,7 +131,7 @@ export class BarChartNode extends RenderNode {
             width: totalW,
             height: totalH,
             backgroundColor: properties['plotBackgroundColor']
-        });
+        }, properties);
         
         let svg = frame.svg;
         
@@ -186,7 +199,12 @@ export class BarChartNode extends RenderNode {
         const yOffsets = isStacked ? new Array(uniqueX.length).fill(0) : undefined;
         
         yDataSeries.forEach((yData, i) => {
-            const color = groups.length > 1 ? getSeriesColor(i, properties) : properties['plotPrimaryColor'] || getSeriesColor(0, properties);
+            let color: string | ((idx: number) => string);
+            if (groups.length > 1) {
+                color = getSeriesColor(i, properties);
+            } else {
+                color = (idx: number) => getSeriesColor(idx, properties);
+            }
             
             let bw = baseBarW;
             let xOffset = 0;
@@ -196,15 +214,36 @@ export class BarChartNode extends RenderNode {
                 xOffset = (i - groups.length / 2 + 0.5) * bw;
             }
             
-            svg += renderBars(uniqueX, yData, xScale, yScale, frame.innerH, bw, color, xOffset, yOffsets);
+            const errData = errDataSeries ? errDataSeries[i] : undefined;
+            svg += renderBars(
+                uniqueX, yData, xScale, yScale, frame.innerH, bw, color, xOffset, yOffsets, 
+                Number(properties['plotBorderThickness'] || 0), properties['plotBorderColor'] || '#000000', errData,
+                properties['showLabels'], properties['labelColor'], properties['plotFontFamily'], properties['plotFontSize']
+            );
         });
         
         // Legend
         if (properties['showLegend']) {
-            const legendItems = groups.map((col, i) => ({
-                label: String(col) === 'default' ? yCol : String(col),
-                color: groups.length > 1 ? getSeriesColor(i, properties) : properties['plotPrimaryColor'] || getSeriesColor(0, properties)
-            }));
+            let legendItems: { label: string, color: string, type: 'rect' }[];
+            if (groups.length > 1) {
+                legendItems = groups.map((col, i) => ({
+                    label: String(col) === 'default' ? yCol : String(col),
+                    color: getSeriesColor(i, properties),
+                    type: 'rect'
+                }));
+            } else if (isCategoricalX) {
+                legendItems = uniqueX.map((xVal, i) => ({
+                    label: String(xVal),
+                    color: getSeriesColor(i, properties),
+                    type: 'rect'
+                }));
+            } else {
+                legendItems = [{
+                    label: yCol,
+                    color: properties['plotPrimaryColor'] || getSeriesColor(0, properties),
+                    type: 'rect'
+                }];
+            }
             
             svg += renderLegend({
                 items: legendItems,
@@ -218,7 +257,7 @@ export class BarChartNode extends RenderNode {
             });
         }
         
-        svg = closeChartFrame(svg, properties['title'], totalW, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
+        svg = closeChartFrame(svg, properties['title'], frame, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
         
         const renderData: any = { type: 'core:svg', content: svg };
         renderData._domain = createDomainMetadata(xMin, xMax, yMin, yMax);

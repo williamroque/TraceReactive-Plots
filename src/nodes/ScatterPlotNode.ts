@@ -23,7 +23,7 @@ export class ScatterPlotNode extends RenderNode {
     ];
     
     readonly properties = [
-        { name: 'title', label: 'Title', type: 'string' as const, defaultValue: 'Scatter Plot' },
+        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'Scatter Plot' },
         { name: 'xColumn', label: 'X Column', type: 'string' as const, defaultValue: '' },
         { name: 'yColumn', label: 'Y Column', type: 'string' as const, defaultValue: '' },
         { name: 'sizeColumn', label: 'Size Column (Optional)', type: 'string' as const, defaultValue: '' },
@@ -63,18 +63,19 @@ export class ScatterPlotNode extends RenderNode {
         
         // Domain X
         let xMin = 0, xMax = 0;
+        const padding = Number(properties['plotRangePadding'] ?? 0.05);
         if (!isCategoricalX) {
-            [xMin, xMax] = computeNiceDomain(xData as number[]);
+            [xMin, xMax] = computeNiceDomain(xData as number[], padding);
         }
         
         // Domain Y
-        const [yMin, yMax] = computeNiceDomain(yData);
+        const [yMin, yMax] = computeNiceDomain(yData, padding);
         
         const frame = createChartFrame({
             width: totalW,
             height: totalH,
             backgroundColor: properties['plotBackgroundColor']
-        });
+        }, properties);
         
         let svg = frame.svg;
         
@@ -132,14 +133,14 @@ export class ScatterPlotNode extends RenderNode {
                 gridThickness: properties['plotGridThickness'],
                 showGrid: properties['showGrid'],
                 thousandsSeparator: properties['thousandsSeparator'],
-                label: properties['xLabel']
+                label: properties['yLabel']
             });
         }
         
         // Size computation
         let sizeFn: number | ((i: number) => number) = Number(properties['radius']) || 4;
         if (sizeData.length > 0) {
-            const [sMin, sMax] = computeNiceDomain(sizeData);
+            const [sMin, sMax] = computeNiceDomain(sizeData, padding);
             const scaleSize = linearScale(sMin, sMax, 10); // scale size delta from 0 to 10
             sizeFn = (i: number) => 2 + scaleSize(sizeData[i]); // min radius 2, max 12
         }
@@ -147,15 +148,18 @@ export class ScatterPlotNode extends RenderNode {
         // Color computation
         let colorFn: string | ((i: number) => string) = properties['plotPrimaryColor'] || getSeriesColor(0, properties);
         if (colorData.length > 0) {
-            const [cMin, cMax] = computeNiceDomain(colorData);
+            const [cMin, cMax] = computeNiceDomain(colorData, padding);
             const lowColor = properties['plotPrimaryColor'];
             const highColor = properties['plotSecondaryColor'];
             colorFn = (i: number) => interpolateColor(colorData[i], cMin, cMax, lowColor, highColor);
         }
         
-        svg += renderScatterPoints(xData, yData, xScale, yScale, sizeFn, colorFn);
+        svg += renderScatterPoints(
+            xData, yData, xScale, yScale, sizeFn, colorFn,
+            properties['showLabels'], properties['labelColor'], properties['plotFontFamily'], properties['plotFontSize']
+        );
         
-        svg = closeChartFrame(svg, properties['title'], totalW, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
+        svg = closeChartFrame(svg, properties['title'], frame, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
         
         const renderData: any = { type: 'core:svg', content: svg };
         renderData._domain = createDomainMetadata(xMin, xMax, yMin, yMax);

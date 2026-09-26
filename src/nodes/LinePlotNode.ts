@@ -23,7 +23,7 @@ export class LinePlotNode extends RenderNode {
     ];
     
     readonly properties = [
-        { name: 'title', label: 'Title', type: 'string' as const, defaultValue: 'Line Plot' },
+        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'Line Plot' },
         { name: 'xColumn', label: 'X Column', type: 'string' as const, defaultValue: '' },
         { name: 'yColumns', label: 'Y Columns (comma-separated)', type: 'string' as const, defaultValue: '' },
         { name: 'aspectRatio', label: 'Aspect Ratio', type: 'number' as const, defaultValue: 1.6 },
@@ -56,20 +56,21 @@ export class LinePlotNode extends RenderNode {
         
         // Domain X
         let xMin = 0, xMax = 0;
+        const padding = Number(properties['plotRangePadding'] ?? 0.05);
         if (!isCategoricalX) {
             const xNums = xData.map(v => Number(v));
-            [xMin, xMax] = computeNiceDomain(xNums);
+            [xMin, xMax] = computeNiceDomain(xNums, padding);
         }
         
         // Domain Y
         const allY = yDataSeries.flat().filter(v => !isNaN(v));
-        const [yMin, yMax] = computeNiceDomain(allY);
+        const [yMin, yMax] = computeNiceDomain(allY, padding);
         
         const frame = createChartFrame({
             width: totalW,
             height: totalH,
             backgroundColor: properties['plotBackgroundColor']
-        });
+        }, properties);
         
         let svg = frame.svg;
         
@@ -127,7 +128,7 @@ export class LinePlotNode extends RenderNode {
                 gridThickness: properties['plotGridThickness'],
                 showGrid: properties['showGrid'],
                 thousandsSeparator: properties['thousandsSeparator'],
-                label: properties['xLabel']
+                label: properties['yLabel']
             });
         }
         
@@ -138,7 +139,7 @@ export class LinePlotNode extends RenderNode {
             svg += renderLinePath(xData, yData, xScale, yScale, color, lineWidth);
         });
         
-        svg = closeChartFrame(svg, properties['title'], totalW, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
+        svg = closeChartFrame(svg, properties['title'], frame, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
         
         const renderData: any = { type: 'core:svg', content: svg };
         renderData._domain = createDomainMetadata(xMin, xMax, yMin, yMax);

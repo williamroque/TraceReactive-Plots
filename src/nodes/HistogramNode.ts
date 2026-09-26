@@ -22,7 +22,7 @@ export class HistogramNode extends RenderNode {
     ];
     
     readonly properties = [
-        { name: 'title', label: 'Title', type: 'string' as const, defaultValue: 'Histogram' },
+        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'Histogram' },
         { name: 'column', label: 'Column', type: 'string' as const, defaultValue: '' },
         { name: 'binCount', label: 'Bin Count (0 = auto)', type: 'number' as const, defaultValue: 0, min: 0 },
         { name: 'aspectRatio', label: 'Aspect Ratio', type: 'number' as const, defaultValue: 1.6 },
@@ -72,15 +72,22 @@ export class HistogramNode extends RenderNode {
         const totalW = 600;
         const totalH = totalW / aspectRatio;
         
-        const [xMin, xMax] = computeNiceDomain([min, max]);
-        const yMax = Math.max(...frequencies, 1);
+        const padding = Number(properties['plotRangePadding'] ?? 0.05);
+        const [xMin, xMax] = computeNiceDomain([min, max], padding);
+        let yMax = Math.max(...frequencies, 1);
         const yMin = 0;
+        
+        if (yMax === yMin) {
+            yMax += 1;
+        } else {
+            yMax += (yMax - yMin) * padding;
+        }
         
         const frame = createChartFrame({
             width: totalW,
             height: totalH,
             backgroundColor: properties['plotBackgroundColor']
-        });
+        }, properties);
         
         let svg = frame.svg;
         
@@ -125,16 +132,20 @@ export class HistogramNode extends RenderNode {
                 gridThickness: properties['plotGridThickness'],
                 showGrid: properties['showGrid'],
                 thousandsSeparator: properties['thousandsSeparator'],
-                label: properties['xLabel']
+                label: properties['yLabel']
             });
         }
         
         const barW = (frame.innerW / (xMax - xMin)) * binWidth * 0.95; // 5% gap
         const color = properties['plotPrimaryColor'] || '#77E4FF';
         
-        svg += renderBars(binCenters, frequencies, xScale, yScale, frame.innerH, barW, color, 0);
+        svg += renderBars(
+            binCenters, frequencies, xScale, yScale, frame.innerH, barW, color, 0, undefined, 
+            Number(properties['plotBorderThickness'] || 0), properties['plotBorderColor'] || '#000000', undefined,
+            properties['showLabels'], properties['labelColor'], properties['plotFontFamily'], properties['plotFontSize']
+        );
         
-        svg = closeChartFrame(svg, properties['title'], totalW, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
+        svg = closeChartFrame(svg, properties['title'], frame, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
         
         const renderData: any = { type: 'core:svg', content: svg };
         renderData._domain = createDomainMetadata(xMin, xMax, yMin, yMax);

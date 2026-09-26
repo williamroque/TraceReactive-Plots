@@ -40,7 +40,7 @@ export function renderXAxis(config: AxisConfig): string {
             parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, config.thousandsSeparator);
             labelStr = parts.join('.');
         }
-        svg += renderLabel(labelStr, xPos, 20, {
+        svg += renderLabel(labelStr, xPos, 10, {
             color: config.axisColor,
             fontFamily: safeFont,
             fontSize: config.fontSize,
@@ -51,12 +51,13 @@ export function renderXAxis(config: AxisConfig): string {
     
     // Axis Label
     if (config.label) {
-        svg += renderLabel(config.label, config.innerW / 2, 40, {
+        const labelY = 10 + config.fontSize * 1.5 + 5;
+        svg += renderLabel(config.label, config.innerW / 2, labelY, {
             color: config.axisColor,
             fontFamily: safeFont,
             fontSize: config.fontSize * 1.1,
             align: 'middle',
-            baseline: 'middle'
+            baseline: 'hanging'
         });
     }
     
@@ -68,6 +69,8 @@ export function renderYAxis(config: AxisConfig): string {
     const safeFont = config.fontFamily.replace(/"/g, '&quot;');
     let svg = `<g class="y-axis" font-family="${safeFont}" font-size="${config.fontSize}" fill="${config.axisColor}">`;
     svg += `<line x1="0" y1="0" x2="0" y2="${config.innerH}" stroke="${config.axisColor}" stroke-width="${config.axisThickness}" />`;
+    
+    let maxTickChars = 0;
     
     config.ticks.forEach(tick => {
         const yPos = config.scale(tick);
@@ -81,12 +84,17 @@ export function renderYAxis(config: AxisConfig): string {
         svg += `<line x1="-6" y1="${yPos}" x2="0" y2="${yPos}" stroke="${config.axisColor}" stroke-width="${config.axisThickness}" />`;
         
         // Label
-        let labelStr = config.isCategorical ? tick : parseFloat(Number(tick).toPrecision(4)).toString();
+        let labelStr = config.isCategorical ? String(tick) : parseFloat(Number(tick).toPrecision(4)).toString();
         if (!config.isCategorical && config.thousandsSeparator) {
             const parts = labelStr.split('.');
             parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, config.thousandsSeparator);
             labelStr = parts.join('.');
         }
+        
+        if (labelStr.length > maxTickChars) {
+            maxTickChars = labelStr.length;
+        }
+        
         svg += renderLabel(labelStr, -10, yPos, {
             color: config.axisColor,
             fontFamily: safeFont,
@@ -98,7 +106,9 @@ export function renderYAxis(config: AxisConfig): string {
     
     // Axis Label
     if (config.label) {
-        svg += renderLabel(config.label, -40 - config.fontSize * 1.5, config.innerH / 2, {
+        const tickWidthEst = Math.max(config.fontSize * 1.5, maxTickChars * config.fontSize * 0.6);
+        const xOffset = -10 - tickWidthEst - 15; // 15px padding to be safe
+        svg += renderLabel(config.label, xOffset, config.innerH / 2, {
             color: config.axisColor,
             fontFamily: safeFont,
             fontSize: config.fontSize * 1.1,

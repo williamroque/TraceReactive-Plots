@@ -24,7 +24,7 @@ export class QQPlotNode extends RenderNode {
     ];
     
     readonly properties = [
-        { name: 'title', label: 'Title', type: 'string' as const, defaultValue: 'Normal Q-Q Plot' },
+        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'Normal Q-Q Plot' },
         { name: 'column', label: 'Column', type: 'text' as const, defaultValue: '' },
         ...chartStyleProperties,
         ...chartAxisProperties,
@@ -52,8 +52,9 @@ export class QQPlotNode extends RenderNode {
         const xData = theoretical;
         const yData = arr;
         
-        const [xMin, xMax] = computeNiceDomain(xData);
-        const [yMin, yMax] = computeNiceDomain(yData);
+        const padding = Number(properties['plotRangePadding'] ?? 0.05);
+        const [xMin, xMax] = computeNiceDomain(xData, padding);
+        const [yMin, yMax] = computeNiceDomain(yData, padding);
         
         const totalW = 500;
         const totalH = 500;
@@ -62,7 +63,7 @@ export class QQPlotNode extends RenderNode {
             width: totalW,
             height: totalH,
             backgroundColor: properties['plotBackgroundColor']
-        });
+        }, properties);
         
         let svg = frame.svg;
         const xScale = linearScale(xMin, xMax, frame.innerW);
@@ -92,7 +93,7 @@ export class QQPlotNode extends RenderNode {
                 fontFamily: properties['plotFontFamily'], fontSize: properties['plotFontSize'],
                 gridColor: properties['plotGridColor'], gridThickness: properties['plotGridThickness'], showGrid: properties['showGrid'],
                 thousandsSeparator: properties['thousandsSeparator'],
-                label: properties['xLabel']
+                label: properties['yLabel']
             });
         }
         
@@ -118,7 +119,7 @@ export class QQPlotNode extends RenderNode {
             svg += renderLinePath([p1X, p2X], [p1Y, p2Y], xScale, yScale, properties['plotSecondaryColor'] || '#FF6B6B', 2);
         } catch(e) { }
         
-        svg = closeChartFrame(svg, properties['title'], totalW, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
+        svg = closeChartFrame(svg, properties['title'], frame, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
         
         const renderData: any = { type: 'core:svg', content: svg };
         renderData._domain = createDomainMetadata(xMin, xMax, yMin, yMax);

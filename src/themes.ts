@@ -12,6 +12,9 @@ export const PlotThemeSections: ThemeSection[] = [
             { key: 'plotGridColor', label: 'Grid color', type: 'color', defaultValue: '#333333', section: 'Plots: General', packageId: 'com.tracereactive.plots' },
             { key: 'plotGridThickness', label: 'Grid thickness', type: 'number', defaultValue: '0.5', section: 'Plots: General', packageId: 'com.tracereactive.plots' },
             { key: 'plotBackgroundColor', label: 'Background', type: 'color', defaultValue: '#00000000', section: 'Plots: General', packageId: 'com.tracereactive.plots' },
+            { key: 'plotBorderThickness', label: 'Border thickness', type: 'number', defaultValue: '0', section: 'Plots: General', packageId: 'com.tracereactive.plots' },
+            { key: 'plotBorderColor', label: 'Border color', type: 'color', defaultValue: '#000000', section: 'Plots: General', packageId: 'com.tracereactive.plots' },
+            { key: 'plotRangePadding', label: 'Range padding', type: 'number', defaultValue: '0.05', section: 'Plots: General', packageId: 'com.tracereactive.plots' },
             { 
                 key: 'plotFontFamily', 
                 label: 'Font family', 

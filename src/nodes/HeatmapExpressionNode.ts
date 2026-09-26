@@ -23,7 +23,7 @@ export class HeatmapExpressionNode extends RenderNode {
     ];
     
     readonly properties = [
-        { name: 'title', label: 'Title', type: 'string' as const, defaultValue: 'Heatmap z = f(x,y)' },
+        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'Heatmap z = f(x,y)' },
         { name: 'expression', label: 'Expression', type: 'expression' as const, defaultValue: 'sin(x) * cos(y)' },
         { name: 'xMin', label: 'X Min', type: 'number' as const, defaultValue: -5 },
         { name: 'xMax', label: 'X Max', type: 'number' as const, defaultValue: 5 },
@@ -105,7 +105,7 @@ export class HeatmapExpressionNode extends RenderNode {
             width: totalW,
             height: totalH,
             backgroundColor: properties['plotBackgroundColor']
-        });
+        }, properties);
         
         let svg = frame.svg;
         
@@ -183,11 +183,11 @@ export class HeatmapExpressionNode extends RenderNode {
                 gridThickness: properties['plotGridThickness'],
                 showGrid: properties['showGrid'],
                 thousandsSeparator: properties['thousandsSeparator'],
-                label: properties['xLabel']
+                label: properties['yLabel']
             });
         }
         
-        svg = closeChartFrame(svg, properties['title'], totalW, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
+        svg = closeChartFrame(svg, properties['title'], frame, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
         
         const renderData = { type: 'core:svg', content: svg };
         return {

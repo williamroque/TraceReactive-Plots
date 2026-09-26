@@ -23,7 +23,7 @@ export class ExpressionPlotNode extends RenderNode {
     ];
     
     readonly properties = [
-        { name: 'title', label: 'Title', type: 'string' as const, defaultValue: 'y = f(x)' },
+        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'y = f(x)' },
         { name: 'expression', label: 'Expression', type: 'expression' as const, defaultValue: 'sin(x)' },
         { name: 'startX', label: 'Start X', type: 'number' as const, defaultValue: -10 },
         { name: 'endX', label: 'End X', type: 'number' as const, defaultValue: 10 },
@@ -78,14 +78,15 @@ export class ExpressionPlotNode extends RenderNode {
         const totalW = 600;
         const totalH = totalW / aspectRatio;
         
-        const [xMin, xMax] = computeNiceDomain([startX, endX]);
-        const [yMin, yMax] = computeNiceDomain(validY);
+        const padding = Number(properties['plotRangePadding'] ?? 0.05);
+        const [xMin, xMax] = computeNiceDomain([startX, endX], padding);
+        const [yMin, yMax] = computeNiceDomain(validY, padding);
         
         const frame = createChartFrame({
             width: totalW,
             height: totalH,
             backgroundColor: properties['plotBackgroundColor']
-        });
+        }, properties);
         
         let svg = frame.svg;
         
@@ -135,7 +136,7 @@ export class ExpressionPlotNode extends RenderNode {
                 gridThickness: properties['plotGridThickness'],
                 showGrid: properties['showGrid'],
                 thousandsSeparator: properties['thousandsSeparator'],
-                label: properties['xLabel']
+                label: properties['yLabel']
             });
         }
         
@@ -144,7 +145,7 @@ export class ExpressionPlotNode extends RenderNode {
         
         svg += renderLinePath(xData, yData, xScale, yScale, color, lineWidth);
         
-        svg = closeChartFrame(svg, properties['title'], totalW, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
+        svg = closeChartFrame(svg, properties['title'], frame, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
         
         const renderData: any = { type: 'core:svg', content: svg };
         renderData._domain = createDomainMetadata(xMin, xMax, yMin, yMax);

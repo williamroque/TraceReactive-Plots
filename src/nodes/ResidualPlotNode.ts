@@ -22,7 +22,7 @@ export class ResidualPlotNode extends RenderNode {
     ];
     
     readonly properties = [
-        { name: 'title', label: 'Title', type: 'string' as const, defaultValue: 'Residuals vs Fitted' },
+        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'Residuals vs Fitted' },
         { name: 'yPredCol', label: 'Predicted (X)', type: 'text' as const, defaultValue: 'y_pred' },
         { name: 'residualCol', label: 'Residuals (Y)', type: 'text' as const, defaultValue: 'residual' },
         ...chartStyleProperties,
@@ -51,8 +51,9 @@ export class ResidualPlotNode extends RenderNode {
         
         if (xData.length === 0) return {};
         
-        const [xMin, xMax] = computeNiceDomain(xData);
-        let [yMin, yMax] = computeNiceDomain(yData);
+        const padding = Number(properties['plotRangePadding'] ?? 0.05);
+        const [xMin, xMax] = computeNiceDomain(xData, padding);
+        let [yMin, yMax] = computeNiceDomain(yData, padding);
         
         const maxAbs = Math.max(Math.abs(yMin), Math.abs(yMax));
         yMin = -maxAbs;
@@ -61,7 +62,7 @@ export class ResidualPlotNode extends RenderNode {
         const totalW = 600;
         const totalH = 400;
         
-        const frame = createChartFrame({ width: totalW, height: totalH, backgroundColor: properties['plotBackgroundColor'] });
+        const frame = createChartFrame({ width: totalW, height: totalH, backgroundColor: properties['plotBackgroundColor'] }, properties);
         let svg = frame.svg;
         
         const xScale = linearScale(xMin, xMax, frame.innerW);
@@ -79,14 +80,14 @@ export class ResidualPlotNode extends RenderNode {
             const ticks = properties['yMajorTickSpacing'] > 0 ? getTickValues(yMin, yMax, properties['yMajorTickSpacing']) : getTickValues(yMin, yMax, getAutoTickSpacing(yMin, yMax));
             svg += renderYAxis({ scale: yScale, ticks, isCategorical: false, innerW: frame.innerW, innerH: frame.innerH, axisColor: properties['plotAxisColor'], axisThickness: properties['plotAxisThickness'] || 1, fontFamily: properties['plotFontFamily'], fontSize: properties['plotFontSize'], gridColor: properties['plotGridColor'], gridThickness: properties['plotGridThickness'], showGrid: properties['showGrid'],
                 thousandsSeparator: properties['thousandsSeparator'],
-                label: properties['xLabel']
+                label: properties['yLabel']
             });
         }
         
         svg += renderLinePath([xMin, xMax], [0, 0], xScale, yScale, properties['plotSecondaryColor'] || '#FF6B6B', 1);
         svg += renderScatterPoints(xData, yData, xScale, yScale, 4, properties['plotPrimaryColor'] || '#77E4FF');
         
-        svg = closeChartFrame(svg, properties['title'], totalW, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
+        svg = closeChartFrame(svg, properties['title'], frame, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
         
         const renderData: any = { type: 'core:svg', content: svg };
         renderData._domain = createDomainMetadata(xMin, xMax, yMin, yMax);

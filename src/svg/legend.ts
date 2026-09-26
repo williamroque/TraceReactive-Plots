@@ -3,6 +3,7 @@ import { renderLabel } from './latex';
 export interface LegendItem {
     label: string;
     color: string;
+    type?: 'line' | 'rect';
 }
 
 export interface LegendConfig {
@@ -87,7 +88,12 @@ export function renderLegend(config: LegendConfig): string {
         const cy = itemY + config.fontSize / 2;
         
         // Symbol (line/rect)
-        svg += `<line x1="${padding}" y1="${cy}" x2="${padding + symbolWidth}" y2="${cy}" stroke="${item.color}" stroke-width="3" />`;
+        if (item.type === 'rect') {
+            const rectSize = Math.min(symbolWidth, config.fontSize);
+            svg += `<rect x="${padding + (symbolWidth - rectSize)/2}" y="${cy - rectSize/2}" width="${rectSize}" height="${rectSize}" fill="${item.color}" />`;
+        } else {
+            svg += `<line x1="${padding}" y1="${cy}" x2="${padding + symbolWidth}" y2="${cy}" stroke="${item.color}" stroke-width="3" />`;
+        }
         
         // Label using MathJax to support LaTeX
         svg += renderLabel(item.label, padding + symbolWidth + symbolSpacing, cy, {

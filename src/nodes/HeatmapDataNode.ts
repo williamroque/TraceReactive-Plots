@@ -20,7 +20,7 @@ export class HeatmapDataNode extends RenderNode {
     ];
     
     readonly properties = [
-        { name: 'title', label: 'Title', type: 'string' as const, defaultValue: 'Heatmap' },
+        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'Heatmap' },
         { name: 'xColumn', label: 'Row Label Column', type: 'string' as const, defaultValue: '' },
         { name: 'valueColumns', label: 'Value Columns (comma-sep)', type: 'string' as const, defaultValue: '' },
         { name: 'showValues', label: 'Show Values', type: 'boolean' as const, defaultValue: true },
@@ -81,7 +81,7 @@ export class HeatmapDataNode extends RenderNode {
             height: totalH,
             backgroundColor: properties['plotBackgroundColor'],
             margin
-        });
+        }, properties);
         
         let svg = frame.svg;
         
@@ -142,7 +142,7 @@ export class HeatmapDataNode extends RenderNode {
         xLabelsSvg += `</g>`;
         svg += xLabelsSvg;
         
-        svg = closeChartFrame(svg, properties['title'], totalW, labelColor, fontFamily, properties['plotTitleFontSize']);
+        svg = closeChartFrame(svg, properties['title'], frame, labelColor, fontFamily, properties['plotTitleFontSize']);
         
         const renderData: any = { type: 'core:svg', content: svg };
         renderData._domain = createDomainMetadata(0, colLabels.length, 0, rowLabels.length);

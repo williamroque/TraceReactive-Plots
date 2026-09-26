@@ -13,7 +13,7 @@ export function categoricalScale(categories: string[], range: number): (category
     };
 }
 
-export function computeNiceDomain(data: number[]): [number, number] {
+export function computeNiceDomain(data: number[], paddingFactor: number = 0.05): [number, number] {
     const validData = data.filter(v => !isNaN(v));
     if (validData.length === 0) return [0, 1];
     
@@ -27,7 +27,7 @@ export function computeNiceDomain(data: number[]): [number, number] {
     
     // Very simple nice-ing for now
     const range = max - min;
-    const padding = range * 0.05;
+    const padding = range * paddingFactor;
     return [min - padding, max + padding];
 }
 

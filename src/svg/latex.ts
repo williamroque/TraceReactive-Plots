@@ -57,6 +57,23 @@ export function renderLabel(text: string, x: number, y: number, options: LabelOp
         if (baseline === 'hanging') dy = '1em'; 
         
         let plainText = text.replace(/\\\$/g, '$');
+        const lines = plainText.split('\n');
+        
+        if (lines.length > 1) {
+            // Adjust starting y based on number of lines and baseline if needed
+            // For now, tspan will just offset sequentially. If baseline is middle, we might want to shift up.
+            const totalLines = lines.length;
+            const shiftY = baseline === 'middle' ? -((totalLines - 1) * 0.6) + 'em' : dy;
+            
+            let svgText = `<text x="${x}" y="${y}" ${transformStr} fill="${color}" font-family="${fontFamily}" font-size="${fontSize}px" text-anchor="${textAnchor}" dominant-baseline="${baseline === 'auto' ? 'auto' : baseline}">`;
+            lines.forEach((line, index) => {
+                const lineDy = index === 0 ? shiftY : '1.2em';
+                svgText += `<tspan x="${x}" dy="${lineDy}">${line}</tspan>`;
+            });
+            svgText += `</text>`;
+            return svgText;
+        }
+
         return `<text x="${x}" y="${y}" ${transformStr} fill="${color}" font-family="${fontFamily}" font-size="${fontSize}px" text-anchor="${textAnchor}" dominant-baseline="${baseline === 'auto' ? 'auto' : baseline}" dy="${dy}">${plainText}</text>`;
     }
     

@@ -23,7 +23,7 @@ export class AreaChartNode extends RenderNode {
     ];
     
     readonly properties = [
-        { name: 'title', label: 'Title', type: 'string' as const, defaultValue: 'Area Chart' },
+        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'Area Chart' },
         { name: 'xColumn', label: 'X Column', type: 'string' as const, defaultValue: '' },
         { name: 'yColumns', label: 'Y Columns (comma-separated)', type: 'string' as const, defaultValue: '' },
         { name: 'stacked', label: 'Stacked', type: 'boolean' as const, defaultValue: false },
@@ -61,8 +61,9 @@ export class AreaChartNode extends RenderNode {
         
         // Domain X
         let xMin = 0, xMax = 0;
+        const padding = Number(properties['plotRangePadding'] ?? 0.05);
         if (!isCategoricalX) {
-            [xMin, xMax] = computeNiceDomain(xData as number[]);
+            [xMin, xMax] = computeNiceDomain(xData as number[], padding);
         }
         
         // Domain Y
@@ -83,14 +84,14 @@ export class AreaChartNode extends RenderNode {
         }
         
         // Re-compute nice domain for max to get padding
-        const [, niceMax] = computeNiceDomain([yMin, yMax]);
+        const [, niceMax] = computeNiceDomain([yMin, yMax], padding);
         yMax = niceMax;
         
         const frame = createChartFrame({
             width: totalW,
             height: totalH,
             backgroundColor: properties['plotBackgroundColor']
-        });
+        }, properties);
         
         let svg = frame.svg;
         
@@ -148,7 +149,7 @@ export class AreaChartNode extends RenderNode {
                 gridThickness: properties['plotGridThickness'],
                 showGrid: properties['showGrid'],
                 thousandsSeparator: properties['thousandsSeparator'],
-                label: properties['xLabel']
+                label: properties['yLabel']
             });
         }
         
@@ -180,7 +181,7 @@ export class AreaChartNode extends RenderNode {
             }
         });
         
-        svg = closeChartFrame(svg, properties['title'], totalW, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
+        svg = closeChartFrame(svg, properties['title'], frame, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
         
         const renderData: any = { type: 'core:svg', content: svg };
         renderData._domain = createDomainMetadata(xMin, xMax, yMin, yMax);

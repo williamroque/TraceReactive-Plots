@@ -1,3 +1,5 @@
+import { renderLabel } from './latex';
+
 export function renderLinePath(
     xData: any[], 
     yData: number[], 
@@ -34,7 +36,11 @@ export function renderScatterPoints(
     xScale: (x: any) => number, 
     yScale: (y: number) => number, 
     radius: number | ((i: number) => number),
-    color: string | ((i: number) => string)
+    color: string | ((i: number) => string),
+    showLabels: boolean = false,
+    labelColor: string = '#000000',
+    fontFamily: string = 'sans-serif',
+    fontSize: number = 12
 ): string {
     let svg = '';
     for (let i = 0; i < xData.length; i++) {
@@ -44,6 +50,19 @@ export function renderScatterPoints(
             const r = typeof radius === 'function' ? radius(i) : radius;
             const c = typeof color === 'function' ? color(i) : color;
             svg += `<circle cx="${xPos}" cy="${yPos}" r="${r}" fill="${c}" opacity="0.8" />`;
+            
+            if (showLabels) {
+                const labelStr = parseFloat(yData[i].toPrecision(4)).toString();
+                // Place label above the point
+                const labelY = yPos - r - fontSize * 0.5;
+                svg += renderLabel(labelStr, xPos, labelY, {
+                    color: labelColor,
+                    fontFamily,
+                    fontSize: fontSize * 0.9,
+                    align: 'middle',
+                    baseline: 'auto'
+                });
+            }
         }
     }
     return svg;
@@ -56,14 +75,23 @@ export function renderBars(
     yScale: (y: number) => number, 
     innerH: number,
     barWidth: number,
-    color: string,
+    color: string | ((i: number) => string),
     xOffset: number = 0,
-    yOffsets?: number[]
+    yOffsets?: number[],
+    borderThickness: number = 0,
+    borderColor: string | ((i: number) => string) = '#000000',
+    errorData?: number[],
+    showLabels: boolean = false,
+    labelColor: string = '#000000',
+    fontFamily: string = 'sans-serif',
+    fontSize: number = 12
 ): string {
     let svg = '';
     for (let i = 0; i < xData.length; i++) {
         if (!isNaN(yData[i])) {
             const cx = xScale(xData[i]) + xOffset;
+            const c = typeof color === 'function' ? color(i) : color;
+            const bc = typeof borderColor === 'function' ? borderColor(i) : borderColor;
             
             // Handle stacked bars if yOffsets are provided
             const yBase = yOffsets ? yOffsets[i] : 0;
@@ -80,12 +108,54 @@ export function renderBars(
                 yOffsets[i] = yVal;
             }
             
+            let strokeAttr = '';
+            if (borderThickness > 0) {
+                strokeAttr = ` stroke="${bc}" stroke-width="${borderThickness}"`;
+            }
+            
             // Only draw if height is positive
             if (h > 0) {
-                svg += `<rect x="${bx}" y="${yPos}" width="${barWidth}" height="${h}" fill="${color}" />`;
+                svg += `<rect x="${bx}" y="${yPos}" width="${barWidth}" height="${h}" fill="${c}"${strokeAttr} />`;
             } else if (h < 0) {
                 // Handle negative bars pointing downwards from base
-                svg += `<rect x="${bx}" y="${yPosBase}" width="${barWidth}" height="${-h}" fill="${color}" />`;
+                svg += `<rect x="${bx}" y="${yPosBase}" width="${barWidth}" height="${-h}" fill="${c}"${strokeAttr} />`;
+            }
+            
+            if (errorData && !isNaN(errorData[i]) && errorData[i] > 0) {
+                const err = errorData[i];
+                const errTop = yScale(yVal + err);
+                const errBottom = yScale(yVal - err);
+                const eWidth = barWidth * 0.5;
+                const el = cx - eWidth / 2;
+                const er = cx + eWidth / 2;
+                const errColor = bc;
+                
+                svg += `<line x1="${cx}" y1="${errTop}" x2="${cx}" y2="${errBottom}" stroke="${errColor}" stroke-width="1.5" />`;
+                svg += `<line x1="${el}" y1="${errTop}" x2="${er}" y2="${errTop}" stroke="${errColor}" stroke-width="1.5" />`;
+                svg += `<line x1="${el}" y1="${errBottom}" x2="${er}" y2="${errBottom}" stroke="${errColor}" stroke-width="1.5" />`;
+            }
+            
+            if (showLabels) {
+                const labelStr = parseFloat(yVal.toPrecision(4)).toString();
+                if (h > 0) {
+                    const labelY = yPos - fontSize * 0.5;
+                    svg += renderLabel(labelStr, cx, labelY, {
+                        color: labelColor,
+                        fontFamily,
+                        fontSize: fontSize * 0.9,
+                        align: 'middle',
+                        baseline: 'auto'
+                    });
+                } else if (h < 0) {
+                    const labelY = yPosBase - h + fontSize * 1.5;
+                    svg += renderLabel(labelStr, cx, labelY, {
+                        color: labelColor,
+                        fontFamily,
+                        fontSize: fontSize * 0.9,
+                        align: 'middle',
+                        baseline: 'auto'
+                    });
+                }
             }
         }
     }
@@ -160,7 +230,9 @@ export function renderBoxPlot(
     xPos: number,
     boxWidth: number,
     yScale: (y: number) => number,
-    color: string
+    color: string,
+    borderThickness: number = 2,
+    borderColor?: string
 ): string {
     const yMin = yScale(stats.min);
     const yQ1 = yScale(stats.q1);
@@ -172,27 +244,29 @@ export function renderBoxPlot(
     const l = xPos - halfW;
     const r = xPos + halfW;
     
+    const strokeColor = borderColor || color;
+    
     let svg = '';
     
     // Vertical line (whiskers)
-    svg += `<line x1="${xPos}" y1="${yMax}" x2="${xPos}" y2="${yQ3}" stroke="${color}" stroke-width="2" />`;
-    svg += `<line x1="${xPos}" y1="${yQ1}" x2="${xPos}" y2="${yMin}" stroke="${color}" stroke-width="2" />`;
+    svg += `<line x1="${xPos}" y1="${yMax}" x2="${xPos}" y2="${yQ3}" stroke="${strokeColor}" stroke-width="${borderThickness}" />`;
+    svg += `<line x1="${xPos}" y1="${yQ1}" x2="${xPos}" y2="${yMin}" stroke="${strokeColor}" stroke-width="${borderThickness}" />`;
     
     // Top whisker cap
-    svg += `<line x1="${xPos - halfW/2}" y1="${yMax}" x2="${xPos + halfW/2}" y2="${yMax}" stroke="${color}" stroke-width="2" />`;
+    svg += `<line x1="${xPos - halfW/2}" y1="${yMax}" x2="${xPos + halfW/2}" y2="${yMax}" stroke="${strokeColor}" stroke-width="${borderThickness}" />`;
     // Bottom whisker cap
-    svg += `<line x1="${xPos - halfW/2}" y1="${yMin}" x2="${xPos + halfW/2}" y2="${yMin}" stroke="${color}" stroke-width="2" />`;
+    svg += `<line x1="${xPos - halfW/2}" y1="${yMin}" x2="${xPos + halfW/2}" y2="${yMin}" stroke="${strokeColor}" stroke-width="${borderThickness}" />`;
     
     // Box
     const boxH = yQ1 - yQ3; // SVG coords are inverted
-    svg += `<rect x="${l}" y="${yQ3}" width="${boxWidth}" height="${boxH}" fill="${color}" opacity="0.7" stroke="${color}" stroke-width="2" />`;
+    svg += `<rect x="${l}" y="${yQ3}" width="${boxWidth}" height="${boxH}" fill="${color}" opacity="0.7" stroke="${strokeColor}" stroke-width="${borderThickness}" />`;
     
     // Median line
-    svg += `<line x1="${l}" y1="${yMed}" x2="${r}" y2="${yMed}" stroke="${color}" stroke-width="3" />`;
+    svg += `<line x1="${l}" y1="${yMed}" x2="${r}" y2="${yMed}" stroke="${strokeColor}" stroke-width="${borderThickness + 1}" />`;
     
     // Outliers
     stats.outliers.forEach(outVal => {
-        svg += `<circle cx="${xPos}" cy="${yScale(outVal)}" r="3" fill="none" stroke="${color}" stroke-width="1.5" />`;
+        svg += `<circle cx="${xPos}" cy="${yScale(outVal)}" r="3" fill="none" stroke="${strokeColor}" stroke-width="1.5" />`;
     });
     
     return svg;

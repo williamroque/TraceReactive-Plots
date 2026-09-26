@@ -20,7 +20,7 @@ export class PieDonutNode extends RenderNode {
     ];
     
     readonly properties = [
-        { name: 'title', label: 'Title', type: 'string' as const, defaultValue: 'Pie Chart' },
+        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'Pie Chart' },
         { name: 'labelColumn', label: 'Label Column', type: 'string' as const, defaultValue: '' },
         { name: 'valueColumn', label: 'Value Column', type: 'string' as const, defaultValue: '' },
         { name: 'donut', label: 'Donut Chart', type: 'boolean' as const, defaultValue: false },
@@ -58,7 +58,7 @@ export class PieDonutNode extends RenderNode {
             height: totalH,
             backgroundColor: properties['plotBackgroundColor'],
             margin
-        });
+        }, properties);
         
         let svg = frame.svg;
         
@@ -109,7 +109,7 @@ export class PieDonutNode extends RenderNode {
             svg += labelSvg;
         }
         
-        svg = closeChartFrame(svg, properties['title'], totalW, properties['plotLabelColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
+        svg = closeChartFrame(svg, properties['title'], frame, properties['plotLabelColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
         
         const renderData: any = { type: 'core:svg', content: svg };
         renderData._plotData = { labels, values, seriesType: 'pie' };
