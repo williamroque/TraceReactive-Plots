@@ -1,9 +1,10 @@
 import { RenderNode } from '@tracereactive/types';
 import { PlotCategory } from '../categories';
-import { chartStyleProperties, chartAxisProperties, createDomainMetadata, getColumnData } from '../helpers';
+import { chartStyleProperties, chartAxisProperties, chartLabelProperties, chartLegendProperties, createDomainMetadata, getColumnData  } from '../helpers';
 import { linearScale, computeNiceDomain, getTickValues, getAutoTickSpacing } from '../svg/scales';
 import { createChartFrame, closeChartFrame } from '../svg/frame';
 import { renderXAxis, renderYAxis } from '../svg/axes';
+import { renderLegend } from '../svg/legend';
 import { renderScatterPoints, renderLinePath } from '../svg/series';
 
 export class ResidualPlotNode extends RenderNode {
@@ -21,11 +22,13 @@ export class ResidualPlotNode extends RenderNode {
     ];
     
     readonly properties = [
-        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'Residuals vs Fitted' },
+        { name: 'title', label: 'Title', type: 'string' as const, defaultValue: 'Residuals vs Fitted' },
         { name: 'yPredCol', label: 'Predicted (X)', type: 'text' as const, defaultValue: 'y_pred' },
         { name: 'residualCol', label: 'Residuals (Y)', type: 'text' as const, defaultValue: 'residual' },
         ...chartStyleProperties,
-        ...chartAxisProperties
+        ...chartAxisProperties,
+        ...chartLabelProperties,
+        ...chartLegendProperties
     ];
 
     async evaluate(inputs: Record<string, any>, properties: Record<string, any>): Promise<Record<string, any>> {
@@ -66,14 +69,18 @@ export class ResidualPlotNode extends RenderNode {
         
         if (properties['showXMajorTicks']) {
             const ticks = properties['xMajorTickSpacing'] > 0 ? getTickValues(xMin, xMax, properties['xMajorTickSpacing']) : getTickValues(xMin, xMax, getAutoTickSpacing(xMin, xMax));
-            svg += renderXAxis({ scale: xScale, ticks, isCategorical: false, innerW: frame.innerW, innerH: frame.innerH, axisColor: properties['plotAxisColor'], axisThickness: properties['plotAxisThickness'] || 1, fontFamily: properties['plotFontFamily'], fontSize: properties['plotFontSize'], gridColor: properties['plotGridColor'], gridThickness: properties['plotGridThickness'], showGrid: properties['showGrid'] ,
-                thousandsSeparator: properties['thousandsSeparator']});
+            svg += renderXAxis({ scale: xScale, ticks, isCategorical: false, innerW: frame.innerW, innerH: frame.innerH, axisColor: properties['plotAxisColor'], axisThickness: properties['plotAxisThickness'] || 1, fontFamily: properties['plotFontFamily'], fontSize: properties['plotFontSize'], gridColor: properties['plotGridColor'], gridThickness: properties['plotGridThickness'], showGrid: properties['showGrid'],
+                thousandsSeparator: properties['thousandsSeparator'],
+                label: properties['xLabel']
+            });
         }
         
         if (properties['showYMajorTicks']) {
             const ticks = properties['yMajorTickSpacing'] > 0 ? getTickValues(yMin, yMax, properties['yMajorTickSpacing']) : getTickValues(yMin, yMax, getAutoTickSpacing(yMin, yMax));
-            svg += renderYAxis({ scale: yScale, ticks, isCategorical: false, innerW: frame.innerW, innerH: frame.innerH, axisColor: properties['plotAxisColor'], axisThickness: properties['plotAxisThickness'] || 1, fontFamily: properties['plotFontFamily'], fontSize: properties['plotFontSize'], gridColor: properties['plotGridColor'], gridThickness: properties['plotGridThickness'], showGrid: properties['showGrid'] ,
-                thousandsSeparator: properties['thousandsSeparator']});
+            svg += renderYAxis({ scale: yScale, ticks, isCategorical: false, innerW: frame.innerW, innerH: frame.innerH, axisColor: properties['plotAxisColor'], axisThickness: properties['plotAxisThickness'] || 1, fontFamily: properties['plotFontFamily'], fontSize: properties['plotFontSize'], gridColor: properties['plotGridColor'], gridThickness: properties['plotGridThickness'], showGrid: properties['showGrid'],
+                thousandsSeparator: properties['thousandsSeparator'],
+                label: properties['xLabel']
+            });
         }
         
         svg += renderLinePath([xMin, xMax], [0, 0], xScale, yScale, properties['plotSecondaryColor'] || '#FF6B6B', 1);

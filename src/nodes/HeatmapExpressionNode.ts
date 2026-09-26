@@ -2,9 +2,10 @@ import { RenderNode } from '@tracereactive/types';
 import { PlotCategory } from '../categories';
 import { createChartFrame, closeChartFrame } from '../svg/frame';
 import { renderXAxis, renderYAxis } from '../svg/axes';
+import { renderLegend } from '../svg/legend';
 import { interpolateColor } from '../svg/colors';
 import { linearScale, computeNiceDomain, getTickValues, getAutoTickSpacing } from '../svg/scales';
-import { chartAxisProperties } from '../helpers';
+import { chartAxisProperties, chartLabelProperties, chartLegendProperties } from '../helpers';
 import * as mathjs from 'mathjs';
 
 export class HeatmapExpressionNode extends RenderNode {
@@ -22,7 +23,7 @@ export class HeatmapExpressionNode extends RenderNode {
     ];
     
     readonly properties = [
-        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'Heatmap z = f(x,y)' },
+        { name: 'title', label: 'Title', type: 'string' as const, defaultValue: 'Heatmap z = f(x,y)' },
         { name: 'expression', label: 'Expression', type: 'expression' as const, defaultValue: 'sin(x) * cos(y)' },
         { name: 'xMin', label: 'X Min', type: 'number' as const, defaultValue: -5 },
         { name: 'xMax', label: 'X Max', type: 'number' as const, defaultValue: 5 },
@@ -31,16 +32,18 @@ export class HeatmapExpressionNode extends RenderNode {
         { name: 'resolution', label: 'Resolution (NxN)', type: 'number' as const, defaultValue: 50, min: 2, max: 200 },
         { name: 'aspectRatio', label: 'Aspect Ratio', type: 'number' as const, defaultValue: 1.0 },
         
-        { name: 'colorLow', label: 'Low Value Color', type: 'style' as const, styleType: 'color' as const, category: 'style' as const, defaultValue: 'theme:plotBackgroundColor' },
-        { name: 'colorHigh', label: 'High Value Color', type: 'style' as const, styleType: 'color' as const, category: 'style' as const, defaultValue: 'theme:plotPrimaryColor' },
+        { name: 'colorLow', label: 'Low Value Color', type: 'style' as const, styleType: 'color' as const, category: 'style' as const, defaultValue: 'theme:com.tracereactive.plots.plotBackgroundColor' },
+        { name: 'colorHigh', label: 'High Value Color', type: 'style' as const, styleType: 'color' as const, category: 'style' as const, defaultValue: 'theme:com.tracereactive.plots.plotPrimaryColor' },
         
-        { name: 'plotBackgroundColor', label: 'Background', type: 'style' as const, styleType: 'color' as const, category: 'style' as const, defaultValue: 'theme:plotBackgroundColor' },
-        { name: 'plotAxisColor', label: 'Axis color', type: 'style' as const, styleType: 'color' as const, category: 'style' as const, defaultValue: 'theme:plotAxisColor' },
-        { name: 'plotAxisThickness', label: 'Axis thickness', type: 'style' as const, styleType: 'size' as const, category: 'style' as const, defaultValue: 'theme:plotAxisThickness' },
-        { name: 'plotFontFamily', label: 'Font family', type: 'style' as const, styleType: 'font' as const, category: 'style' as const, defaultValue: 'theme:plotFontFamily' },
-        { name: 'plotFontSize', label: 'Font size', type: 'style' as const, styleType: 'size' as const, category: 'style' as const, defaultValue: 'theme:plotFontSize' },
-        { name: 'plotTitleFontSize', label: 'Title font size', type: 'style' as const, styleType: 'size' as const, category: 'style' as const, defaultValue: 'theme:plotTitleFontSize' },
-        ...chartAxisProperties
+        { name: 'plotBackgroundColor', label: 'Background', type: 'style' as const, styleType: 'color' as const, category: 'style' as const, defaultValue: 'theme:com.tracereactive.plots.plotBackgroundColor' },
+        { name: 'plotAxisColor', label: 'Axis color', type: 'style' as const, styleType: 'color' as const, category: 'style' as const, defaultValue: 'theme:com.tracereactive.plots.plotAxisColor' },
+        { name: 'plotAxisThickness', label: 'Axis thickness', type: 'style' as const, styleType: 'size' as const, category: 'style' as const, defaultValue: 'theme:com.tracereactive.plots.plotAxisThickness' },
+        { name: 'plotFontFamily', label: 'Font family', type: 'style' as const, styleType: 'font' as const, category: 'style' as const, defaultValue: 'theme:com.tracereactive.plots.plotFontFamily' },
+        { name: 'plotFontSize', label: 'Font size', type: 'style' as const, styleType: 'size' as const, category: 'style' as const, defaultValue: 'theme:com.tracereactive.plots.plotFontSize' },
+        { name: 'plotTitleFontSize', label: 'Title font size', type: 'style' as const, styleType: 'size' as const, category: 'style' as const, defaultValue: 'theme:com.tracereactive.plots.plotTitleFontSize' },
+        ...chartAxisProperties,
+        ...chartLabelProperties,
+        ...chartLegendProperties
     ];
 
     async evaluate(inputs: Record<string, any>, properties: Record<string, any>): Promise<Record<string, any>> {
@@ -155,9 +158,10 @@ export class HeatmapExpressionNode extends RenderNode {
                 fontSize: properties['plotFontSize'],
                 gridColor: properties['plotGridColor'],
                 gridThickness: properties['plotGridThickness'],
-                showGrid: properties['showGrid']
-            ,
-                thousandsSeparator: properties['thousandsSeparator']});
+                showGrid: properties['showGrid'],
+                thousandsSeparator: properties['thousandsSeparator'],
+                label: properties['xLabel']
+            });
         }
         
         if (properties['showYMajorTicks']) {
@@ -177,9 +181,10 @@ export class HeatmapExpressionNode extends RenderNode {
                 fontSize: properties['plotFontSize'],
                 gridColor: properties['plotGridColor'],
                 gridThickness: properties['plotGridThickness'],
-                showGrid: properties['showGrid']
-            ,
-                thousandsSeparator: properties['thousandsSeparator']});
+                showGrid: properties['showGrid'],
+                thousandsSeparator: properties['thousandsSeparator'],
+                label: properties['xLabel']
+            });
         }
         
         svg = closeChartFrame(svg, properties['title'], totalW, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);

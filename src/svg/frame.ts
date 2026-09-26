@@ -5,7 +5,7 @@ export interface ChartFrameConfig {
     margin?: { top: number; right: number; bottom: number; left: number };
 }
 
-export const defaultMargin = { top: 40, right: 30, bottom: 40, left: 60 };
+export const defaultMargin = { top: 40, right: 30, bottom: 60, left: 70 };
 
 export function createChartFrame(config: ChartFrameConfig): { svg: string, innerW: number, innerH: number, margin: typeof defaultMargin } {
     const margin = config.margin || defaultMargin;
@@ -18,13 +18,20 @@ export function createChartFrame(config: ChartFrameConfig): { svg: string, inner
     return { svg, innerW, innerH, margin };
 }
 
+import { renderLabel } from './latex';
+
 export function closeChartFrame(svg: string, title: string, width: number, axisColor: string, fontFamily: string, titleFontSize: number): string {
     svg += `</g>`;
     
     if (title) {
         const safeFont = fontFamily.replace(/"/g, '&quot;');
-        const safeTitle = title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        svg += `<text class="plot-title" x="${width / 2}" y="20" text-anchor="middle" fill="${axisColor}" font-family="${safeFont}" font-size="${titleFontSize}px">${safeTitle}</text>`;
+        svg += renderLabel(title, width / 2, 20, {
+            color: axisColor,
+            fontFamily: safeFont,
+            fontSize: titleFontSize,
+            align: 'middle',
+            baseline: 'middle'
+        });
     }
     
     svg += `</svg>`;

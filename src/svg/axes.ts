@@ -12,7 +12,10 @@ export interface AxisConfig {
     gridThickness?: number;
     showGrid?: boolean;
     thousandsSeparator?: string;
+    label?: string;
 }
+
+import { renderLabel } from './latex';
 
 export function renderXAxis(config: AxisConfig): string {
     const safeFont = config.fontFamily.replace(/"/g, '&quot;');
@@ -31,14 +34,31 @@ export function renderXAxis(config: AxisConfig): string {
         svg += `<line x1="${xPos}" y1="0" x2="${xPos}" y2="6" stroke="${config.axisColor}" stroke-width="${config.axisThickness}" />`;
         
         // Label
-        let label = config.isCategorical ? tick : parseFloat(Number(tick).toPrecision(4)).toString();
+        let labelStr = config.isCategorical ? tick : parseFloat(Number(tick).toPrecision(4)).toString();
         if (!config.isCategorical && config.thousandsSeparator) {
-            const parts = label.split('.');
+            const parts = labelStr.split('.');
             parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, config.thousandsSeparator);
-            label = parts.join('.');
+            labelStr = parts.join('.');
         }
-        svg += `<text x="${xPos}" y="20" text-anchor="middle">${label}</text>`;
+        svg += renderLabel(labelStr, xPos, 20, {
+            color: config.axisColor,
+            fontFamily: safeFont,
+            fontSize: config.fontSize,
+            align: 'middle',
+            baseline: 'hanging'
+        });
     });
+    
+    // Axis Label
+    if (config.label) {
+        svg += renderLabel(config.label, config.innerW / 2, 40, {
+            color: config.axisColor,
+            fontFamily: safeFont,
+            fontSize: config.fontSize * 1.1,
+            align: 'middle',
+            baseline: 'middle'
+        });
+    }
     
     svg += `</g>`;
     return svg;
@@ -61,14 +81,32 @@ export function renderYAxis(config: AxisConfig): string {
         svg += `<line x1="-6" y1="${yPos}" x2="0" y2="${yPos}" stroke="${config.axisColor}" stroke-width="${config.axisThickness}" />`;
         
         // Label
-        let label = config.isCategorical ? tick : parseFloat(Number(tick).toPrecision(4)).toString();
+        let labelStr = config.isCategorical ? tick : parseFloat(Number(tick).toPrecision(4)).toString();
         if (!config.isCategorical && config.thousandsSeparator) {
-            const parts = label.split('.');
+            const parts = labelStr.split('.');
             parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, config.thousandsSeparator);
-            label = parts.join('.');
+            labelStr = parts.join('.');
         }
-        svg += `<text x="-10" y="${yPos}" text-anchor="end" dominant-baseline="middle">${label}</text>`;
+        svg += renderLabel(labelStr, -10, yPos, {
+            color: config.axisColor,
+            fontFamily: safeFont,
+            fontSize: config.fontSize,
+            align: 'end',
+            baseline: 'middle'
+        });
     });
+    
+    // Axis Label
+    if (config.label) {
+        svg += renderLabel(config.label, -40 - config.fontSize * 1.5, config.innerH / 2, {
+            color: config.axisColor,
+            fontFamily: safeFont,
+            fontSize: config.fontSize * 1.1,
+            align: 'middle',
+            baseline: 'middle',
+            rotation: -90
+        });
+    }
     
     svg += `</g>`;
     return svg;

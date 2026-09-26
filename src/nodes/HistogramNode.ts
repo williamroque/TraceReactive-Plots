@@ -1,9 +1,10 @@
 import { RenderNode } from '@tracereactive/types';
 import { PlotCategory } from '../categories';
-import { chartStyleProperties, chartAxisProperties, getColumnData, createDomainMetadata } from '../helpers';
+import { chartStyleProperties, chartAxisProperties, chartLabelProperties, chartLegendProperties, getColumnData, createDomainMetadata  } from '../helpers';
 import { linearScale, computeNiceDomain, getTickValues, getAutoTickSpacing } from '../svg/scales';
 import { createChartFrame, closeChartFrame } from '../svg/frame';
 import { renderXAxis, renderYAxis } from '../svg/axes';
+import { renderLegend } from '../svg/legend';
 import { renderBars } from '../svg/series';
 
 export class HistogramNode extends RenderNode {
@@ -21,12 +22,14 @@ export class HistogramNode extends RenderNode {
     ];
     
     readonly properties = [
-        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'Histogram' },
+        { name: 'title', label: 'Title', type: 'string' as const, defaultValue: 'Histogram' },
         { name: 'column', label: 'Column', type: 'string' as const, defaultValue: '' },
         { name: 'binCount', label: 'Bin Count (0 = auto)', type: 'number' as const, defaultValue: 0, min: 0 },
         { name: 'aspectRatio', label: 'Aspect Ratio', type: 'number' as const, defaultValue: 1.6 },
         ...chartStyleProperties,
-        ...chartAxisProperties
+        ...chartAxisProperties,
+        ...chartLabelProperties,
+        ...chartLegendProperties
     ];
 
     async evaluate(inputs: Record<string, any>, properties: Record<string, any>): Promise<Record<string, any>> {
@@ -120,9 +123,10 @@ export class HistogramNode extends RenderNode {
                 fontSize: properties['plotFontSize'],
                 gridColor: properties['plotGridColor'],
                 gridThickness: properties['plotGridThickness'],
-                showGrid: properties['showGrid']
-            ,
-                thousandsSeparator: properties['thousandsSeparator']});
+                showGrid: properties['showGrid'],
+                thousandsSeparator: properties['thousandsSeparator'],
+                label: properties['xLabel']
+            });
         }
         
         const barW = (frame.innerW / (xMax - xMin)) * binWidth * 0.95; // 5% gap

@@ -1,9 +1,10 @@
 import { RenderNode } from '@tracereactive/types';
 import { PlotCategory } from '../categories';
-import { chartStyleProperties, chartAxisProperties, getColumnData, createDomainMetadata } from '../helpers';
+import { chartStyleProperties, chartAxisProperties, chartLabelProperties, chartLegendProperties, getColumnData, createDomainMetadata  } from '../helpers';
 import { linearScale, categoricalScale, computeNiceDomain, getTickValues, getAutoTickSpacing } from '../svg/scales';
 import { createChartFrame, closeChartFrame } from '../svg/frame';
 import { renderXAxis, renderYAxis } from '../svg/axes';
+import { renderLegend } from '../svg/legend';
 import { renderBoxPlot } from '../svg/series';
 import { getSeriesColor } from '../svg/colors';
 
@@ -22,12 +23,14 @@ export class BoxPlotNode extends RenderNode {
     ];
     
     readonly properties = [
-        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'Box Plot' },
+        { name: 'title', label: 'Title', type: 'string' as const, defaultValue: 'Box Plot' },
         { name: 'columns', label: 'Columns to Compare (comma-sep)', type: 'string' as const, defaultValue: '' },
         { name: 'showOutliers', label: 'Show Outliers', type: 'boolean' as const, defaultValue: true },
         { name: 'aspectRatio', label: 'Aspect Ratio', type: 'number' as const, defaultValue: 1.6 },
         ...chartStyleProperties,
-        ...chartAxisProperties
+        ...chartAxisProperties,
+        ...chartLabelProperties,
+        ...chartLegendProperties
     ];
 
     async evaluate(inputs: Record<string, any>, properties: Record<string, any>): Promise<Record<string, any>> {
@@ -150,9 +153,10 @@ export class BoxPlotNode extends RenderNode {
                 fontSize: properties['plotFontSize'],
                 gridColor: properties['plotGridColor'],
                 gridThickness: properties['plotGridThickness'],
-                showGrid: properties['showGrid']
-            ,
-                thousandsSeparator: properties['thousandsSeparator']});
+                showGrid: properties['showGrid'],
+                thousandsSeparator: properties['thousandsSeparator'],
+                label: properties['xLabel']
+            });
         }
         
         const boxWidth = Math.min(40, (frame.innerW / cols.length) * 0.5);

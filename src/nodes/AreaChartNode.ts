@@ -1,9 +1,10 @@
 import { RenderNode } from '@tracereactive/types';
 import { PlotCategory } from '../categories';
-import { chartStyleProperties, chartAxisProperties, getColumnData, createDomainMetadata } from '../helpers';
+import { chartStyleProperties, chartAxisProperties, chartLabelProperties, chartLegendProperties, getColumnData, createDomainMetadata  } from '../helpers';
 import { linearScale, categoricalScale, computeNiceDomain, getTickValues, getAutoTickSpacing } from '../svg/scales';
 import { createChartFrame, closeChartFrame } from '../svg/frame';
 import { renderXAxis, renderYAxis } from '../svg/axes';
+import { renderLegend } from '../svg/legend';
 import { renderArea, renderLinePath } from '../svg/series';
 import { getSeriesColor } from '../svg/colors';
 
@@ -22,15 +23,17 @@ export class AreaChartNode extends RenderNode {
     ];
     
     readonly properties = [
-        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'Area Chart' },
+        { name: 'title', label: 'Title', type: 'string' as const, defaultValue: 'Area Chart' },
         { name: 'xColumn', label: 'X Column', type: 'string' as const, defaultValue: '' },
         { name: 'yColumns', label: 'Y Columns (comma-separated)', type: 'string' as const, defaultValue: '' },
         { name: 'stacked', label: 'Stacked', type: 'boolean' as const, defaultValue: false },
         { name: 'opacity', label: 'Fill Opacity', type: 'number' as const, defaultValue: 0.3, step: 0.1, min: 0, max: 1 },
         { name: 'aspectRatio', label: 'Aspect Ratio', type: 'number' as const, defaultValue: 1.6 },
         ...chartStyleProperties,
-        { name: 'lineWidth', label: 'Line Width', type: 'style' as const, styleType: 'size' as const, category: 'style' as const, defaultValue: 'theme:plotAxisThickness' },
-        ...chartAxisProperties
+        { name: 'lineWidth', label: 'Line Width', type: 'style' as const, styleType: 'size' as const, category: 'style' as const, defaultValue: 'theme:com.tracereactive.plots.plotAxisThickness' },
+        ...chartAxisProperties,
+        ...chartLabelProperties,
+        ...chartLegendProperties
     ];
 
     async evaluate(inputs: Record<string, any>, properties: Record<string, any>): Promise<Record<string, any>> {
@@ -120,9 +123,10 @@ export class AreaChartNode extends RenderNode {
                 fontSize: properties['plotFontSize'],
                 gridColor: properties['plotGridColor'],
                 gridThickness: properties['plotGridThickness'],
-                showGrid: properties['showGrid']
-            ,
-                thousandsSeparator: properties['thousandsSeparator']});
+                showGrid: properties['showGrid'],
+                thousandsSeparator: properties['thousandsSeparator'],
+                label: properties['xLabel']
+            });
         }
         
         if (properties['showYMajorTicks']) {
@@ -142,9 +146,10 @@ export class AreaChartNode extends RenderNode {
                 fontSize: properties['plotFontSize'],
                 gridColor: properties['plotGridColor'],
                 gridThickness: properties['plotGridThickness'],
-                showGrid: properties['showGrid']
-            ,
-                thousandsSeparator: properties['thousandsSeparator']});
+                showGrid: properties['showGrid'],
+                thousandsSeparator: properties['thousandsSeparator'],
+                label: properties['xLabel']
+            });
         }
         
         // Series

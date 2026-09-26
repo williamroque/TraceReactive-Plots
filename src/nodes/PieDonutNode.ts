@@ -20,18 +20,18 @@ export class PieDonutNode extends RenderNode {
     ];
     
     readonly properties = [
-        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'Pie Chart' },
+        { name: 'title', label: 'Title', type: 'string' as const, defaultValue: 'Pie Chart' },
         { name: 'labelColumn', label: 'Label Column', type: 'string' as const, defaultValue: '' },
         { name: 'valueColumn', label: 'Value Column', type: 'string' as const, defaultValue: '' },
         { name: 'donut', label: 'Donut Chart', type: 'boolean' as const, defaultValue: false },
         { name: 'showLabels', label: 'Show Labels', type: 'boolean' as const, defaultValue: true },
         { name: 'showPercentages', label: 'Show Percentages', type: 'boolean' as const, defaultValue: true },
         
-        { name: 'plotBackgroundColor', label: 'Background', type: 'style' as const, styleType: 'color' as const, category: 'style' as const, defaultValue: 'theme:plotBackgroundColor' },
-        { name: 'plotFontFamily', label: 'Font family', type: 'style' as const, styleType: 'font' as const, category: 'style' as const, defaultValue: 'theme:plotFontFamily' },
-        { name: 'plotFontSize', label: 'Font size', type: 'style' as const, styleType: 'size' as const, category: 'style' as const, defaultValue: 'theme:plotFontSize' },
-        { name: 'plotTitleFontSize', label: 'Title font size', type: 'style' as const, styleType: 'size' as const, category: 'style' as const, defaultValue: 'theme:plotTitleFontSize' },
-        { name: 'plotLabelColor', label: 'Label color', type: 'style' as const, styleType: 'color' as const, category: 'style' as const, defaultValue: 'theme:plotLabelColor' }
+        { name: 'plotBackgroundColor', label: 'Background', type: 'style' as const, styleType: 'color' as const, category: 'style' as const, defaultValue: 'theme:com.tracereactive.plots.plotBackgroundColor' },
+        { name: 'plotFontFamily', label: 'Font family', type: 'style' as const, styleType: 'font' as const, category: 'style' as const, defaultValue: 'theme:com.tracereactive.plots.plotFontFamily' },
+        { name: 'plotFontSize', label: 'Font size', type: 'style' as const, styleType: 'size' as const, category: 'style' as const, defaultValue: 'theme:com.tracereactive.plots.plotFontSize' },
+        { name: 'plotTitleFontSize', label: 'Title font size', type: 'style' as const, styleType: 'size' as const, category: 'style' as const, defaultValue: 'theme:com.tracereactive.plots.plotTitleFontSize' },
+        { name: 'plotLabelColor', label: 'Label color', type: 'style' as const, styleType: 'color' as const, category: 'style' as const, defaultValue: 'theme:com.tracereactive.plots.plotLabelColor' }
     ];
 
     async evaluate(inputs: Record<string, any>, properties: Record<string, any>): Promise<Record<string, any>> {

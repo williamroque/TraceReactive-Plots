@@ -1,10 +1,12 @@
 import { RenderNode } from '@tracereactive/types';
 import { PlotCategory } from '../categories';
-import { chartStyleProperties, chartAxisProperties, createDomainMetadata } from '../helpers';
+import { chartStyleProperties, chartAxisProperties, chartLabelProperties, chartLegendProperties, createDomainMetadata  } from '../helpers';
 import { linearScale, categoricalScale, computeNiceDomain, getTickValues, getAutoTickSpacing } from '../svg/scales';
 import { createChartFrame, closeChartFrame } from '../svg/frame';
 import { renderXAxis, renderYAxis } from '../svg/axes';
+import { renderLegend } from '../svg/legend';
 import { renderLinePath, renderScatterPoints, renderBars, renderArea, renderConfidenceBand } from '../svg/series';
+import { getSeriesColor } from '../svg/colors';
 
 export class OverlayPlotsNode extends RenderNode {
     readonly category = PlotCategory;
@@ -21,10 +23,12 @@ export class OverlayPlotsNode extends RenderNode {
     ];
     
     readonly properties = [
-        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'Overlay Plot' },
+        { name: 'title', label: 'Title', type: 'string' as const, defaultValue: 'Overlay Plot' },
         { name: 'aspectRatio', label: 'Aspect Ratio', type: 'number' as const, defaultValue: 1.6 },
         ...chartStyleProperties,
-        ...chartAxisProperties
+        ...chartAxisProperties,
+        ...chartLabelProperties,
+        ...chartLegendProperties
     ];
 
     async evaluate(inputs: Record<string, any>, properties: Record<string, any>): Promise<Record<string, any>> {
@@ -116,9 +120,10 @@ export class OverlayPlotsNode extends RenderNode {
                 fontSize: properties['plotFontSize'],
                 gridColor: properties['plotGridColor'],
                 gridThickness: properties['plotGridThickness'],
-                showGrid: properties['showGrid']
-            ,
-                thousandsSeparator: properties['thousandsSeparator']});
+                showGrid: properties['showGrid'],
+                thousandsSeparator: properties['thousandsSeparator'],
+                label: properties['xLabel']
+            });
         }
         
         if (properties['showYMajorTicks']) {
@@ -138,9 +143,10 @@ export class OverlayPlotsNode extends RenderNode {
                 fontSize: properties['plotFontSize'],
                 gridColor: properties['plotGridColor'],
                 gridThickness: properties['plotGridThickness'],
-                showGrid: properties['showGrid']
-            ,
-                thousandsSeparator: properties['thousandsSeparator']});
+                showGrid: properties['showGrid'],
+                thousandsSeparator: properties['thousandsSeparator'],
+                label: properties['xLabel']
+            });
         }
         
         // 3. Re-render all series from input raw data using the unified scales
@@ -157,7 +163,7 @@ export class OverlayPlotsNode extends RenderNode {
             // Re-render based on type
             if (p.seriesType === 'line' && p.yDataSeries) {
                 p.yDataSeries.forEach((yData: number[], j: number) => {
-                    const color = properties[`plotSeriesColor${((i+j) % 6) + 1}`] || '#77E4FF';
+                    const color = getSeriesColor(i + j, properties);
                     if (p.yLowerSeries && p.yUpperSeries) {
                         const yLower = p.yLowerSeries[j];
                         const yUpper = p.yUpperSeries[j];
@@ -171,7 +177,7 @@ export class OverlayPlotsNode extends RenderNode {
             else if (p.seriesType === 'scatter' && p.yDataSeries) {
                 p.yDataSeries.forEach((yData: number[]) => {
                     // Fallbacks if style fn isn't transferable
-                    const color = style.colorFn || properties[`plotSeriesColor${(i % 6) + 1}`] || '#77E4FF';
+                    const color = style.colorFn || getSeriesColor(i, properties);
                     const radius = style.sizeFn || 4;
                     svg += renderScatterPoints(xData, yData, xScale, yScale, radius, color);
                 });
@@ -179,7 +185,7 @@ export class OverlayPlotsNode extends RenderNode {
             else if (p.seriesType === 'bar' && p.yDataSeries) {
                 const bw = isCategoricalX ? (frame.innerW / categoricalXLabels.length) * 0.8 : 20;
                 p.yDataSeries.forEach((yData: number[], j: number) => {
-                    const color = properties[`plotSeriesColor${((i+j) % 6) + 1}`] || '#77E4FF';
+                    const color = getSeriesColor(i + j, properties);
                     svg += renderBars(xData, yData, xScale, yScale, frame.innerH, bw, color, 0);
                 });
             }
@@ -188,7 +194,7 @@ export class OverlayPlotsNode extends RenderNode {
                 const lineOffsets = style.isStacked ? new Array(xData.length).fill(0) : undefined;
                 
                 p.yDataSeries.forEach((yData: number[], j: number) => {
-                    const color = properties[`plotSeriesColor${((i+j) % 6) + 1}`] || '#77E4FF';
+                    const color = getSeriesColor(i + j, properties);
                     svg += renderArea(xData, yData, xScale, yScale, frame.innerH, color, style.opacity || 0.3, yOffsets);
                     
                     if (style.isStacked && lineOffsets) {

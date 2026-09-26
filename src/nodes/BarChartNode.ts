@@ -1,9 +1,10 @@
 import { RenderNode } from '@tracereactive/types';
 import { PlotCategory } from '../categories';
-import { chartStyleProperties, chartAxisProperties, getColumnData, createDomainMetadata } from '../helpers';
+import { chartStyleProperties, chartAxisProperties, chartLabelProperties, chartLegendProperties, getColumnData, createDomainMetadata  } from '../helpers';
 import { linearScale, categoricalScale, computeNiceDomain, getTickValues, getAutoTickSpacing } from '../svg/scales';
 import { createChartFrame, closeChartFrame } from '../svg/frame';
 import { renderXAxis, renderYAxis } from '../svg/axes';
+import { renderLegend } from '../svg/legend';
 import { renderBars } from '../svg/series';
 import { getSeriesColor } from '../svg/colors';
 
@@ -22,7 +23,7 @@ export class BarChartNode extends RenderNode {
     ];
     
     readonly properties = [
-        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'Bar Chart' },
+        { name: 'title', label: 'Title', type: 'string' as const, defaultValue: 'Bar Chart' },
         { name: 'xColumn', label: 'X Column', type: 'string' as const, defaultValue: '' },
         { name: 'yColumn', label: 'Y Column', type: 'string' as const, defaultValue: '' },
         { name: 'groupColumn', label: 'Group By Column (Optional)', type: 'string' as const, defaultValue: '' },
@@ -39,7 +40,9 @@ export class BarChartNode extends RenderNode {
         { name: 'barGap', label: 'Bar Gap', type: 'number' as const, defaultValue: 0.2, step: 0.1, min: 0 },
         { name: 'aspectRatio', label: 'Aspect Ratio', type: 'number' as const, defaultValue: 1.6 },
         ...chartStyleProperties,
-        ...chartAxisProperties
+        ...chartAxisProperties,
+        ...chartLabelProperties,
+        ...chartLegendProperties
     ];
 
     async evaluate(inputs: Record<string, any>, properties: Record<string, any>): Promise<Record<string, any>> {
@@ -146,9 +149,10 @@ export class BarChartNode extends RenderNode {
                 axisThickness: properties['plotAxisThickness'] || 1,
                 fontFamily: properties['plotFontFamily'],
                 fontSize: properties['plotFontSize'],
-                showGrid: false // Typically don't need vertical grids on bar charts
-            ,
-                thousandsSeparator: properties['thousandsSeparator']});
+                showGrid: false, // Typically don't need vertical grids on bar charts
+                thousandsSeparator: properties['thousandsSeparator'],
+                label: properties['xLabel']
+            });
         }
         
         if (properties['showYMajorTicks']) {
@@ -168,9 +172,10 @@ export class BarChartNode extends RenderNode {
                 fontSize: properties['plotFontSize'],
                 gridColor: properties['plotGridColor'],
                 gridThickness: properties['plotGridThickness'],
-                showGrid: properties['showGrid']
-            ,
-                thousandsSeparator: properties['thousandsSeparator']});
+                showGrid: properties['showGrid'],
+                thousandsSeparator: properties['thousandsSeparator'],
+                label: properties['yLabel']
+            });
         }
         
         // Series
@@ -193,6 +198,25 @@ export class BarChartNode extends RenderNode {
             
             svg += renderBars(uniqueX, yData, xScale, yScale, frame.innerH, bw, color, xOffset, yOffsets);
         });
+        
+        // Legend
+        if (properties['showLegend']) {
+            const legendItems = groups.map((col, i) => ({
+                label: String(col) === 'default' ? yCol : String(col),
+                color: groups.length > 1 ? getSeriesColor(i, properties) : properties['plotPrimaryColor'] || getSeriesColor(0, properties)
+            }));
+            
+            svg += renderLegend({
+                items: legendItems,
+                position: properties['legendPosition'] || 'top-right',
+                innerW: frame.innerW,
+                innerH: frame.innerH,
+                fontFamily: properties['plotFontFamily'],
+                fontSize: properties['plotFontSize'],
+                textColor: properties['plotAxisColor'],
+                backgroundColor: properties['plotBackgroundColor']
+            });
+        }
         
         svg = closeChartFrame(svg, properties['title'], totalW, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
         

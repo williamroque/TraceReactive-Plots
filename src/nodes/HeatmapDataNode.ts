@@ -20,20 +20,20 @@ export class HeatmapDataNode extends RenderNode {
     ];
     
     readonly properties = [
-        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'Heatmap' },
+        { name: 'title', label: 'Title', type: 'string' as const, defaultValue: 'Heatmap' },
         { name: 'xColumn', label: 'Row Label Column', type: 'string' as const, defaultValue: '' },
         { name: 'valueColumns', label: 'Value Columns (comma-sep)', type: 'string' as const, defaultValue: '' },
         { name: 'showValues', label: 'Show Values', type: 'boolean' as const, defaultValue: true },
         { name: 'aspectRatio', label: 'Aspect Ratio', type: 'number' as const, defaultValue: 1.0 },
         
         { name: 'colorLow', label: 'Low Value Color', type: 'style' as const, styleType: 'color' as const, category: 'style' as const, defaultValue: '#f8f9fa' }, // Off-white
-        { name: 'colorHigh', label: 'High Value Color', type: 'style' as const, styleType: 'color' as const, category: 'style' as const, defaultValue: 'theme:plotPrimaryColor' },
+        { name: 'colorHigh', label: 'High Value Color', type: 'style' as const, styleType: 'color' as const, category: 'style' as const, defaultValue: 'theme:com.tracereactive.plots.plotPrimaryColor' },
         
-        { name: 'plotBackgroundColor', label: 'Background', type: 'style' as const, styleType: 'color' as const, category: 'style' as const, defaultValue: 'theme:plotBackgroundColor' },
-        { name: 'plotAxisColor', label: 'Label color', type: 'style' as const, styleType: 'color' as const, category: 'style' as const, defaultValue: 'theme:plotAxisColor' },
-        { name: 'plotFontFamily', label: 'Font family', type: 'style' as const, styleType: 'font' as const, category: 'style' as const, defaultValue: 'theme:plotFontFamily' },
-        { name: 'plotFontSize', label: 'Font size', type: 'style' as const, styleType: 'size' as const, category: 'style' as const, defaultValue: 'theme:plotFontSize' },
-        { name: 'plotTitleFontSize', label: 'Title font size', type: 'style' as const, styleType: 'size' as const, category: 'style' as const, defaultValue: 'theme:plotTitleFontSize' }
+        { name: 'plotBackgroundColor', label: 'Background', type: 'style' as const, styleType: 'color' as const, category: 'style' as const, defaultValue: 'theme:com.tracereactive.plots.plotBackgroundColor' },
+        { name: 'plotAxisColor', label: 'Label color', type: 'style' as const, styleType: 'color' as const, category: 'style' as const, defaultValue: 'theme:com.tracereactive.plots.plotAxisColor' },
+        { name: 'plotFontFamily', label: 'Font family', type: 'style' as const, styleType: 'font' as const, category: 'style' as const, defaultValue: 'theme:com.tracereactive.plots.plotFontFamily' },
+        { name: 'plotFontSize', label: 'Font size', type: 'style' as const, styleType: 'size' as const, category: 'style' as const, defaultValue: 'theme:com.tracereactive.plots.plotFontSize' },
+        { name: 'plotTitleFontSize', label: 'Title font size', type: 'style' as const, styleType: 'size' as const, category: 'style' as const, defaultValue: 'theme:com.tracereactive.plots.plotTitleFontSize' }
     ];
 
     async evaluate(inputs: Record<string, any>, properties: Record<string, any>): Promise<Record<string, any>> {

@@ -26,15 +26,10 @@ export const PlotThemeSections: ThemeSection[] = [
         ]
     },
     {
-        name: 'Plots: Series Colors',
+        name: 'Plots: Palette',
         packageId: 'com.tracereactive.plots',
         variables: [
-            { key: 'plotSeriesColor1', label: 'Series 1', type: 'color', defaultValue: '#77E4FF', section: 'Plots: Series Colors', packageId: 'com.tracereactive.plots' },
-            { key: 'plotSeriesColor2', label: 'Series 2', type: 'color', defaultValue: '#ff6b6b', section: 'Plots: Series Colors', packageId: 'com.tracereactive.plots' },
-            { key: 'plotSeriesColor3', label: 'Series 3', type: 'color', defaultValue: '#51cf66', section: 'Plots: Series Colors', packageId: 'com.tracereactive.plots' },
-            { key: 'plotSeriesColor4', label: 'Series 4', type: 'color', defaultValue: '#ffd43b', section: 'Plots: Series Colors', packageId: 'com.tracereactive.plots' },
-            { key: 'plotSeriesColor5', label: 'Series 5', type: 'color', defaultValue: '#cc5de8', section: 'Plots: Series Colors', packageId: 'com.tracereactive.plots' },
-            { key: 'plotSeriesColor6', label: 'Series 6', type: 'color', defaultValue: '#ff922b', section: 'Plots: Series Colors', packageId: 'com.tracereactive.plots' }
+            { key: 'plotPalette', label: 'Color Palette', type: 'palette', defaultValue: '#77E4FF,#ff6b6b,#51cf66,#ffd43b,#cc5de8,#ff922b', section: 'Plots: Palette', packageId: 'com.tracereactive.plots' }
         ]
     }
 ];

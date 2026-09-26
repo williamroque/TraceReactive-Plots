@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "jstat": "^1.9.6",
+    "mathjax-full": "^3.2.2",
     "mathjs": "^13.0.0",
     "simple-statistics": "^7.12.0"
   }

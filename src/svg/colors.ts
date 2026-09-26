@@ -1,20 +1,7 @@
 export function getSeriesColor(index: number, properties: Record<string, any>): string {
-    const defaultColors = [
-        '#77E4FF', // series 1
-        '#ff6b6b', // series 2
-        '#51cf66', // series 3
-        '#ffd43b', // series 4
-        '#cc5de8', // series 5
-        '#ff922b'  // series 6
-    ];
-    
-    // Try to get from properties first
-    const propKey = `plotSeriesColor${(index % 6) + 1}`;
-    if (properties[propKey]) {
-        return String(properties[propKey]);
-    }
-    
-    return defaultColors[index % 6];
+    const paletteStr = properties['plotPalette'] || '#77E4FF,#ff6b6b,#51cf66,#ffd43b,#cc5de8,#ff922b';
+    const palette = typeof paletteStr === 'string' ? paletteStr.split(',').map(s => s.trim()) : ['#77E4FF'];
+    return palette[index % palette.length];
 }
 
 export function hexToRgb(color: string): { r: number, g: number, b: number, a: number } | null {

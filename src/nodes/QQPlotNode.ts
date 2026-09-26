@@ -1,9 +1,10 @@
 import { RenderNode } from '@tracereactive/types';
 import { PlotCategory } from '../categories';
-import { chartStyleProperties, chartAxisProperties, createDomainMetadata, getColumnData } from '../helpers';
+import { chartStyleProperties, chartAxisProperties, chartLabelProperties, chartLegendProperties, createDomainMetadata, getColumnData  } from '../helpers';
 import { linearScale, computeNiceDomain, getTickValues, getAutoTickSpacing } from '../svg/scales';
 import { createChartFrame, closeChartFrame } from '../svg/frame';
 import { renderXAxis, renderYAxis } from '../svg/axes';
+import { renderLegend } from '../svg/legend';
 import { renderScatterPoints, renderLinePath } from '../svg/series';
 import { jStat } from 'jstat';
 import * as ss from 'simple-statistics';
@@ -23,10 +24,12 @@ export class QQPlotNode extends RenderNode {
     ];
     
     readonly properties = [
-        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'Normal Q-Q Plot' },
+        { name: 'title', label: 'Title', type: 'string' as const, defaultValue: 'Normal Q-Q Plot' },
         { name: 'column', label: 'Column', type: 'text' as const, defaultValue: '' },
         ...chartStyleProperties,
-        ...chartAxisProperties
+        ...chartAxisProperties,
+        ...chartLabelProperties,
+        ...chartLegendProperties
     ];
 
     async evaluate(inputs: Record<string, any>, properties: Record<string, any>): Promise<Record<string, any>> {
@@ -73,9 +76,10 @@ export class QQPlotNode extends RenderNode {
                 scale: xScale, ticks, isCategorical: false, innerW: frame.innerW, innerH: frame.innerH,
                 axisColor: properties['plotAxisColor'], axisThickness: properties['plotAxisThickness'] || 1,
                 fontFamily: properties['plotFontFamily'], fontSize: properties['plotFontSize'],
-                gridColor: properties['plotGridColor'], gridThickness: properties['plotGridThickness'], showGrid: properties['showGrid']
-            ,
-                thousandsSeparator: properties['thousandsSeparator']});
+                gridColor: properties['plotGridColor'], gridThickness: properties['plotGridThickness'], showGrid: properties['showGrid'],
+                thousandsSeparator: properties['thousandsSeparator'],
+                label: properties['xLabel']
+            });
         }
         
         if (properties['showYMajorTicks']) {
@@ -86,9 +90,10 @@ export class QQPlotNode extends RenderNode {
                 scale: yScale, ticks, isCategorical: false, innerW: frame.innerW, innerH: frame.innerH,
                 axisColor: properties['plotAxisColor'], axisThickness: properties['plotAxisThickness'] || 1,
                 fontFamily: properties['plotFontFamily'], fontSize: properties['plotFontSize'],
-                gridColor: properties['plotGridColor'], gridThickness: properties['plotGridThickness'], showGrid: properties['showGrid']
-            ,
-                thousandsSeparator: properties['thousandsSeparator']});
+                gridColor: properties['plotGridColor'], gridThickness: properties['plotGridThickness'], showGrid: properties['showGrid'],
+                thousandsSeparator: properties['thousandsSeparator'],
+                label: properties['xLabel']
+            });
         }
         
         svg += renderScatterPoints(xData, yData, xScale, yScale, 4, properties['plotPrimaryColor'] || '#77E4FF');
