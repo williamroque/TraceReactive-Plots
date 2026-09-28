@@ -1,3 +1,4 @@
+import { plotStateCache } from '../stateCache';
 import { RenderNode } from '@tracereactive/types';
 import { PlotCategory } from '../categories';
 import { chartStyleProperties, chartAxisProperties, chartLabelProperties, chartLegendProperties, createDomainMetadata, getColumnData  } from '../helpers';
@@ -91,6 +92,23 @@ export class ResidualPlotNode extends RenderNode {
         
         const renderData: any = { type: 'core:svg', content: svg };
         renderData._domain = createDomainMetadata(xMin, xMax, yMin, yMax);
+        
+        const _stateId = Math.random().toString(36).substring(7);
+        plotStateCache.set(_stateId, {
+            xScale,
+            yScale,
+            frame,
+            properties,
+                        isCategoricalX: false,
+            seriesCount: 1,
+            renderOverlay: (nxScale: any, nyScale: any, nFrame: any, colorOffset: number, overlayProps: any) => {
+                let overlaySvg = renderLinePath([xMin, xMax], [0, 0], nxScale, nyScale, overlayProps['plotSecondaryColor'] || '#FF6B6B', 1);
+                overlaySvg += renderScatterPoints(xData, yData, nxScale, nyScale, 4, overlayProps['plotPrimaryColor'] || '#77E4FF');
+                return overlaySvg;
+            }
+        });
+        renderData._stateId = _stateId;
+        
         renderData._plotData = { xData, yDataSeries: [yData], seriesType: 'scatter' };
         return {
             Render: renderData,

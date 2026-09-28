@@ -1,3 +1,4 @@
+import { plotStateCache } from '../stateCache';
 import { RenderNode } from '@tracereactive/types';
 import { PlotCategory } from '../categories';
 import { chartStyleProperties, chartAxisProperties, chartLabelProperties, chartLegendProperties, createDomainMetadata  } from '../helpers';
@@ -158,6 +159,22 @@ export class ParametricPlotNode extends RenderNode {
         
         const renderData: any = { type: 'core:svg', content: svg };
         renderData._domain = createDomainMetadata(xMin, xMax, yMin, yMax);
+        
+        const _stateId = Math.random().toString(36).substring(7);
+        plotStateCache.set(_stateId, {
+            xScale,
+            yScale,
+            frame,
+            properties,
+                        isCategoricalX: false,
+            seriesCount: 1,
+            renderOverlay: (nxScale: any, nyScale: any, nFrame: any, colorOffset: number, overlayProps: any) => {
+                const overlayColor = overlayProps['plotPrimaryColor'] || '#77E4FF';
+                return renderLinePath(xData, yData, nxScale, nyScale, overlayColor, lineWidth);
+            }
+        });
+        renderData._stateId = _stateId;
+        
         renderData._plotData = { xData, yDataSeries: [yData], seriesType: 'line', style: { lineWidth, isCategoricalX: false } };
         return {
             Render: renderData,

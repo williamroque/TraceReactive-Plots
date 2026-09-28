@@ -1,12 +1,7 @@
+import { plotStateCache } from '../stateCache';
 import { RenderNode } from '@tracereactive/types';
 import { PlotCategory } from '../categories';
-import { chartStyleProperties, chartAxisProperties, chartLabelProperties, chartLegendProperties, createDomainMetadata  } from '../helpers';
-import { linearScale, categoricalScale, computeNiceDomain, getTickValues, getAutoTickSpacing } from '../svg/scales';
-import { createChartFrame, closeChartFrame } from '../svg/frame';
-import { renderXAxis, renderYAxis } from '../svg/axes';
-import { renderLegend } from '../svg/legend';
-import { renderLinePath, renderScatterPoints, renderBars, renderArea, renderConfidenceBand } from '../svg/series';
-import { getSeriesColor } from '../svg/colors';
+import { createDomainMetadata } from '../helpers';
 
 export class OverlayPlotsNode extends RenderNode {
     readonly category = PlotCategory;
@@ -14,215 +9,68 @@ export class OverlayPlotsNode extends RenderNode {
     readonly displayName = 'Overlay Plots';
     readonly visible = true;
     
-    readonly dynamicInputs = { baseName: 'Plot', acceptsType: 'render' };
+    readonly inputs = [
+        { name: 'Main', acceptsType: 'render' }
+    ];
     
-    readonly inputs = [];
+    readonly dynamicInputs = { baseName: 'Overlay', acceptsType: 'render', preserveStaticInputs: true };
     
     readonly outputs = [
         { name: 'Render', outputType: 'render' }
     ];
     
-    readonly properties = [
-        { name: 'title', label: 'Title', type: 'text' as const, defaultValue: 'Overlay Plot' },
-        { name: 'aspectRatio', label: 'Aspect Ratio', type: 'number' as const, defaultValue: 1.6 },
-        ...chartStyleProperties,
-        ...chartAxisProperties,
-        ...chartLabelProperties,
-        ...chartLegendProperties
-    ];
+    readonly properties = [];
+
+
 
     async evaluate(inputs: Record<string, any>, properties: Record<string, any>): Promise<Record<string, any>> {
-        const plotInputs: any[] = [];
+        const mainInput = inputs['Main'];
+        if (!mainInput || !mainInput._stateId) return {};
         
-        // Collect all connected inputs
+        const mainState = plotStateCache.get(mainInput._stateId);
+        if (!mainState) return {};
+        const mainSvg = mainInput.content;
+        
+        let overlayContents = '';
+        let colorOffset = mainState.seriesCount || 1;
+        
         for (let i = 1; i <= 20; i++) {
-            const plotData = inputs[`Plot ${i}`];
-            if (plotData && plotData._domain && plotData._plotData) {
-                plotInputs.push(plotData);
+            const overlayInput = inputs[`Overlay ${i}`];
+            if (overlayInput && overlayInput._stateId) {
+                const overlayState = plotStateCache.get(overlayInput._stateId);
+                if (overlayState && overlayState.renderOverlay) {
+                    overlayContents += overlayState.renderOverlay(
+                        mainState.xScale, mainState.yScale, mainState.frame, colorOffset, mainState.properties
+                    );
+                    colorOffset += overlayState.seriesCount || 1;
+                }
             }
         }
         
-        if (plotInputs.length === 0) return {};
-        
-        // 1. Compute Unified Domain
-        let globalXMin = Infinity, globalXMax = -Infinity;
-        let globalYMin = Infinity, globalYMax = -Infinity;
-        let isCategoricalX = false;
-        let categoricalXLabels: string[] = [];
-        
-        for (const input of plotInputs) {
-            const d = input._domain;
-            const p = input._plotData;
-            
-            if (p.style?.isCategoricalX) {
-                isCategoricalX = true;
-                categoricalXLabels = [...new Set([...categoricalXLabels, ...p.xData])];
+        let finalSvg = mainSvg;
+        if (overlayContents) {
+            if (finalSvg.includes('<!--OVERLAYS-->')) {
+                finalSvg = finalSvg.replace('<!--OVERLAYS-->', overlayContents + '<!--OVERLAYS-->');
             } else {
-                if (d.xMin < globalXMin) globalXMin = d.xMin;
-                if (d.xMax > globalXMax) globalXMax = d.xMax;
+                // Fallback for older frames
+                if (finalSvg.endsWith('</g></svg>')) {
+                    finalSvg = finalSvg.slice(0, -10) + overlayContents + '</g></svg>';
+                } else if (finalSvg.endsWith('</svg>')) {
+                    finalSvg = finalSvg.slice(0, -6) + overlayContents + '</svg>';
+                }
             }
-            
-            if (d.yMin < globalYMin) globalYMin = d.yMin;
-            if (d.yMax > globalYMax) globalYMax = d.yMax;
         }
         
-        // Handle nice domains for the unified bounds if they aren't categorical
-        const padding = Number(properties['plotRangePadding'] ?? 0.05);
-        if (!isCategoricalX) {
-            if (globalXMin === Infinity) { globalXMin = 0; globalXMax = 1; }
-            const [nXMin, nXMax] = computeNiceDomain([globalXMin, globalXMax], padding);
-            globalXMin = nXMin;
-            globalXMax = nXMax;
-        }
+        const renderData: any = { type: 'core:svg', content: finalSvg };
+        if (mainInput._domain) renderData._domain = mainInput._domain;
+        if (mainInput._plotData) renderData._plotData = mainInput._plotData;
         
-        if (globalYMin === Infinity) { globalYMin = 0; globalYMax = 1; }
-        const [nYMin, nYMax] = computeNiceDomain([globalYMin, globalYMax], padding);
-        globalYMin = nYMin;
-        globalYMax = nYMax;
+        // Pass the Main state forward in case this is overlaid again
+        renderData._stateId = mainInput._stateId;
         
-        const aspectRatio = Number(properties['aspectRatio']) || 1.6;
-        const totalW = 600;
-        const totalH = totalW / aspectRatio;
-        
-        const frame = createChartFrame({
-            width: totalW,
-            height: totalH,
-            backgroundColor: properties['plotBackgroundColor']
-        }, properties);
-        
-        let svg = frame.svg;
-        
-        const xScale = isCategoricalX 
-            ? categoricalScale(categoricalXLabels, frame.innerW) 
-            : linearScale(globalXMin, globalXMax, frame.innerW);
-            
-        const yScale = (y: number) => frame.innerH - linearScale(globalYMin, globalYMax, frame.innerH)(y);
-        
-        // 2. Render Shared Axes
-        if (properties['showXMajorTicks']) {
-            let ticks = [];
-            if (isCategoricalX) {
-                ticks = categoricalXLabels;
-            } else if (properties['xMajorTickSpacing'] > 0) {
-                ticks = getTickValues(globalXMin, globalXMax, properties['xMajorTickSpacing']);
-            } else {
-                ticks = getTickValues(globalXMin, globalXMax, getAutoTickSpacing(globalXMin, globalXMax));
-            }
-            
-            svg += renderXAxis({
-                scale: xScale,
-                ticks,
-                isCategorical: isCategoricalX,
-                innerW: frame.innerW,
-                innerH: frame.innerH,
-                axisColor: properties['plotAxisColor'],
-                axisThickness: properties['plotAxisThickness'] || 1,
-                fontFamily: properties['plotFontFamily'],
-                fontSize: properties['plotFontSize'],
-                gridColor: properties['plotGridColor'],
-                gridThickness: properties['plotGridThickness'],
-                showGrid: properties['showGrid'],
-                thousandsSeparator: properties['thousandsSeparator'],
-                label: properties['xLabel']
-            });
-        }
-        
-        if (properties['showYMajorTicks']) {
-            const ticks = properties['yMajorTickSpacing'] > 0 
-                ? getTickValues(globalYMin, globalYMax, properties['yMajorTickSpacing'])
-                : getTickValues(globalYMin, globalYMax, getAutoTickSpacing(globalYMin, globalYMax));
-                
-            svg += renderYAxis({
-                scale: yScale,
-                ticks,
-                isCategorical: false,
-                innerW: frame.innerW,
-                innerH: frame.innerH,
-                axisColor: properties['plotAxisColor'],
-                axisThickness: properties['plotAxisThickness'] || 1,
-                fontFamily: properties['plotFontFamily'],
-                fontSize: properties['plotFontSize'],
-                gridColor: properties['plotGridColor'],
-                gridThickness: properties['plotGridThickness'],
-                showGrid: properties['showGrid'],
-                thousandsSeparator: properties['thousandsSeparator'],
-                label: properties['yLabel']
-            });
-        }
-        
-        // 3. Re-render all series from input raw data using the unified scales
-        for (let i = 0; i < plotInputs.length; i++) {
-            const input = plotInputs[i];
-            const p = input._plotData;
-            const xData = p.xData;
-            
-            // Extract original styling parameters
-            const style = p.style || {};
-            
-            svg += `<g class="overlay-layer layer-${i}">`;
-            
-            // Re-render based on type
-            if (p.seriesType === 'line' && p.yDataSeries) {
-                p.yDataSeries.forEach((yData: number[], j: number) => {
-                    const color = getSeriesColor(i + j, properties);
-                    if (p.yLowerSeries && p.yUpperSeries) {
-                        const yLower = p.yLowerSeries[j];
-                        const yUpper = p.yUpperSeries[j];
-                        if (yLower && yUpper) {
-                            svg += renderConfidenceBand(xData, yLower, yUpper, xScale, yScale, color, 0.2);
-                        }
-                    }
-                    svg += renderLinePath(xData, yData, xScale, yScale, color, style.lineWidth || 2);
-                });
-            } 
-            else if (p.seriesType === 'scatter' && p.yDataSeries) {
-                p.yDataSeries.forEach((yData: number[]) => {
-                    // Fallbacks if style fn isn't transferable
-                    const color = style.colorFn || getSeriesColor(i, properties);
-                    const radius = style.sizeFn || 4;
-                    svg += renderScatterPoints(xData, yData, xScale, yScale, radius, color);
-                });
-            }
-            else if (p.seriesType === 'bar' && p.yDataSeries) {
-                const bw = isCategoricalX ? (frame.innerW / categoricalXLabels.length) * 0.8 : 20;
-                p.yDataSeries.forEach((yData: number[], j: number) => {
-                    const color = getSeriesColor(i + j, properties);
-                    svg += renderBars(xData, yData, xScale, yScale, frame.innerH, bw, color, 0);
-                });
-            }
-            else if (p.seriesType === 'area' && p.yDataSeries) {
-                const yOffsets = style.isStacked ? new Array(xData.length).fill(0) : undefined;
-                const lineOffsets = style.isStacked ? new Array(xData.length).fill(0) : undefined;
-                
-                p.yDataSeries.forEach((yData: number[], j: number) => {
-                    const color = getSeriesColor(i + j, properties);
-                    svg += renderArea(xData, yData, xScale, yScale, frame.innerH, color, style.opacity || 0.3, yOffsets);
-                    
-                    if (style.isStacked && lineOffsets) {
-                        const stackedY = new Array(xData.length);
-                        for (let k = 0; k < xData.length; k++) {
-                            stackedY[k] = yData[k] + lineOffsets[k];
-                            lineOffsets[k] += yData[k];
-                        }
-                        svg += renderLinePath(xData, stackedY, xScale, yScale, color, style.lineWidth || 2);
-                    } else {
-                        svg += renderLinePath(xData, yData, xScale, yScale, color, style.lineWidth || 2);
-                    }
-                });
-            }
-            // Box plots and heatmaps are more complex to overlay, skipping them in the unified renderer for now
-            // Their direct SVG is lost in overlay mode unless we implement full re-rendering for them
-            
-            svg += `</g>`;
-        }
-        
-        svg = closeChartFrame(svg, properties['title'], frame, properties['plotAxisColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
-        
-        const renderData = { type: 'core:svg', content: svg };
         return {
             Render: renderData,
-            type: 'core:svg',
-            content: svg
+            ...renderData
         };
     }
 }

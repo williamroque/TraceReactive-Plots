@@ -15,6 +15,8 @@ export const PlotThemeSections: ThemeSection[] = [
             { key: 'plotBorderThickness', label: 'Border thickness', type: 'number', defaultValue: '0', section: 'Plots: General', packageId: 'com.tracereactive.plots' },
             { key: 'plotBorderColor', label: 'Border color', type: 'color', defaultValue: '#000000', section: 'Plots: General', packageId: 'com.tracereactive.plots' },
             { key: 'plotRangePadding', label: 'Range padding', type: 'number', defaultValue: '0.05', section: 'Plots: General', packageId: 'com.tracereactive.plots' },
+            { key: 'plotRefLineColor', label: 'Reference line color', type: 'color', defaultValue: '#ff6b6b', section: 'Plots: General', packageId: 'com.tracereactive.plots' },
+            { key: 'plotRefLineThickness', label: 'Reference line thickness', type: 'number', defaultValue: '2', section: 'Plots: General', packageId: 'com.tracereactive.plots' },
             { 
                 key: 'plotFontFamily', 
                 label: 'Font family', 

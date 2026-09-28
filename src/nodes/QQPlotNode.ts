@@ -1,3 +1,4 @@
+import { plotStateCache } from '../stateCache';
 import { RenderNode } from '@tracereactive/types';
 import { PlotCategory } from '../categories';
 import { chartStyleProperties, chartAxisProperties, chartLabelProperties, chartLegendProperties, createDomainMetadata, getColumnData  } from '../helpers';
@@ -99,13 +100,15 @@ export class QQPlotNode extends RenderNode {
         
         svg += renderScatterPoints(xData, yData, xScale, yScale, 4, properties['plotPrimaryColor'] || '#77E4FF');
         
+        let slope = 0, intercept = 0, validLine = false;
         try {
             const q1X = jStat.normal.inv(0.25, 0, 1);
             const q3X = jStat.normal.inv(0.75, 0, 1);
             const q1Y = ss.quantile(arr, 0.25);
             const q3Y = ss.quantile(arr, 0.75);
-            const slope = (q3Y - q1Y) / (q3X - q1X);
-            const intercept = q1Y - slope * q1X;
+            slope = (q3Y - q1Y) / (q3X - q1X);
+            intercept = q1Y - slope * q1X;
+            validLine = true;
             
             let p1X = xMin, p1Y = slope * xMin + intercept;
             let p2X = xMax, p2Y = slope * xMax + intercept;
@@ -123,6 +126,32 @@ export class QQPlotNode extends RenderNode {
         
         const renderData: any = { type: 'core:svg', content: svg };
         renderData._domain = createDomainMetadata(xMin, xMax, yMin, yMax);
+        
+        const _stateId = Math.random().toString(36).substring(7);
+        plotStateCache.set(_stateId, {
+            xScale,
+            yScale,
+            frame,
+            properties,
+                        isCategoricalX: false,
+            seriesCount: 1,
+            renderOverlay: (nxScale: any, nyScale: any, nFrame: any, colorOffset: number, overlayProps: any) => {
+                let overlaySvg = renderScatterPoints(xData, yData, nxScale, nyScale, 4, overlayProps['plotPrimaryColor'] || '#77E4FF');
+                if (validLine) {
+                    let p1X = xMin, p1Y = slope * xMin + intercept;
+                    let p2X = xMax, p2Y = slope * xMax + intercept;
+                    if (p1Y < yMin) { p1X = (yMin - intercept) / slope; p1Y = yMin; }
+                    else if (p1Y > yMax) { p1X = (yMax - intercept) / slope; p1Y = yMax; }
+                    if (p2Y < yMin) { p2X = (yMin - intercept) / slope; p2Y = yMin; }
+                    else if (p2Y > yMax) { p2X = (yMax - intercept) / slope; p2Y = yMax; }
+                    
+                    overlaySvg += renderLinePath([p1X, p2X], [p1Y, p2Y], nxScale, nyScale, overlayProps['plotSecondaryColor'] || '#FF6B6B', 2);
+                }
+                return overlaySvg;
+            }
+        });
+        renderData._stateId = _stateId;
+        
         renderData._plotData = { xData, yDataSeries: [yData], seriesType: 'scatter' };
         return {
             Render: renderData,

@@ -15,6 +15,7 @@ import { PieDonutNode } from './nodes/PieDonutNode';
 import { OverlayPlotsNode } from './nodes/OverlayPlotsNode';
 import { QQPlotNode } from './nodes/QQPlotNode';
 import { ResidualPlotNode } from './nodes/ResidualPlotNode';
+import { ReferenceLineNode } from './nodes/ReferenceLineNode';
 
 declare const traceReactive: TraceReactiveAPI;
 
@@ -32,7 +33,8 @@ const nodes = [
     new PieDonutNode(),
     new OverlayPlotsNode(),
     new QQPlotNode(),
-    new ResidualPlotNode()
+    new ResidualPlotNode(),
+    new ReferenceLineNode()
 ];
 
 const serializableNodes = nodes.map(n => ({

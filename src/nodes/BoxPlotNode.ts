@@ -1,3 +1,4 @@
+import { plotStateCache } from '../stateCache';
 import { RenderNode } from '@tracereactive/types';
 import { PlotCategory } from '../categories';
 import { chartStyleProperties, chartAxisProperties, chartLabelProperties, chartLegendProperties, getColumnData, createDomainMetadata  } from '../helpers';
@@ -173,6 +174,29 @@ export class BoxPlotNode extends RenderNode {
         
         const renderData: any = { type: 'core:svg', content: svg };
         renderData._domain = createDomainMetadata(0, cols.length, yMin, yMax); // X domain is index-based for boxplots overlay
+        
+        const _stateId = Math.random().toString(36).substring(7);
+        plotStateCache.set(_stateId, {
+            xScale,
+            yScale,
+            frame,
+            properties,
+                        isCategoricalX: true,
+            categoricalXLabels: cols,
+            seriesCount: cols.length,
+            renderOverlay: (nxScale: any, nyScale: any, nFrame: any, colorOffset: number, overlayProps: any) => {
+                let overlaySvg = '';
+                const bw = Math.min(40, (nFrame.innerW / cols.length) * 0.5);
+                seriesStats.forEach((stats, i) => {
+                    const nxPos = nxScale(cols[i]);
+                    const color = cols.length > 1 ? getSeriesColor(colorOffset + i, overlayProps) : overlayProps['plotPrimaryColor'] || getSeriesColor(colorOffset, overlayProps);
+                    overlaySvg += renderBoxPlot(stats, nxPos, bw, nyScale, color, Number(properties['plotBorderThickness'] || 2), properties['plotBorderColor']);
+                });
+                return overlaySvg;
+            }
+        });
+        renderData._stateId = _stateId;
+        
         renderData._plotData = { xData: cols, yDataSeries: rawSeries, seriesType: 'boxplot', style: { boxWidth, isCategoricalX: true } };
         return {
             Render: renderData,

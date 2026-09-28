@@ -57,7 +57,7 @@ export function createChartFrame(config: ChartFrameConfig, properties?: Record<s
 import { renderLabel } from './latex';
 
 export function closeChartFrame(svg: string, title: string, frame: { totalW: number, innerW: number, margin: { left: number } }, axisColor: string, fontFamily: string, titleFontSize: number): string {
-    svg += `</g>`;
+    svg += `<!--OVERLAYS--></g>`;
     
     if (title) {
         const safeFont = fontFamily.replace(/"/g, '&quot;');

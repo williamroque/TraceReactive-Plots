@@ -1,3 +1,4 @@
+import { plotStateCache } from '../stateCache';
 import { RenderNode } from '@tracereactive/types';
 import { PlotCategory } from '../categories';
 import { getColumnData } from '../helpers';
@@ -111,7 +112,63 @@ export class PieDonutNode extends RenderNode {
         
         svg = closeChartFrame(svg, properties['title'], frame, properties['plotLabelColor'], properties['plotFontFamily'], properties['plotTitleFontSize']);
         
-        const renderData: any = { type: 'core:svg', content: svg };
+        const _stateId = Math.random().toString(36).substring(7);
+        plotStateCache.set(_stateId, {
+            frame,
+            properties,
+                        isCategoricalX: false,
+            seriesCount: labels.length,
+            renderOverlay: (nxScale: any, nyScale: any, nFrame: any, colorOffset: number, overlayProps: any) => {
+                let overlaySvg = '';
+                const nCx = nFrame.innerW / 2;
+                const nCy = nFrame.innerH / 2;
+                const nRadius = Math.min(nFrame.innerW, nFrame.innerH) / 2;
+                const nInnerRadius = properties['donut'] ? nRadius * 0.6 : 0;
+                
+                const overlayColors = labels.map((_, i) => getSeriesColor(colorOffset + i, overlayProps));
+                
+                overlaySvg += renderPieSlices(values, nCx, nCy, nInnerRadius, nRadius, overlayColors);
+                
+                if (properties['showLabels']) {
+                    const fontFamily = properties['plotFontFamily'];
+                    const fontSize = properties['plotFontSize'];
+                    const labelColor = properties['plotLabelColor'];
+                    
+                    let labelSvg = `<g font-family="${fontFamily}" font-size="${fontSize}" fill="${labelColor}">`;
+                    let currentAngle = -Math.PI / 2;
+                    
+                    for (let i = 0; i < values.length; i++) {
+                        const val = values[i];
+                        if (val <= 0) continue;
+                        
+                        const fraction = val / total;
+                        const angle = fraction * Math.PI * 2;
+                        const midAngle = currentAngle + angle / 2;
+                        
+                        const labelRadius = properties['donut'] ? nRadius * 0.8 : nRadius * 0.7;
+                        const lx = nCx + Math.cos(midAngle) * labelRadius;
+                        const ly = nCy + Math.sin(midAngle) * labelRadius;
+                        
+                        let text = labels[i];
+                        if (properties['showPercentages']) {
+                            const pct = Math.round(fraction * 100);
+                            text += ` (${pct}%)`;
+                        }
+                        
+                        if (fraction > 0.02) {
+                            labelSvg += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-weight="bold" fill="#fff" filter="drop-shadow(0px 1px 2px rgba(0,0,0,0.5))">${text}</text>`;
+                        }
+                        
+                        currentAngle += angle;
+                    }
+                    labelSvg += `</g>`;
+                    overlaySvg += labelSvg;
+                }
+                return overlaySvg;
+            }
+        });
+        renderData._stateId = _stateId;
+        
         renderData._plotData = { labels, values, seriesType: 'pie' };
         return {
             Render: renderData,

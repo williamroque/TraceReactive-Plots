@@ -1,3 +1,4 @@
+import { plotStateCache } from '../stateCache';
 import { RenderNode } from '@tracereactive/types';
 import { PlotCategory } from '../categories';
 import { chartStyleProperties, chartAxisProperties, chartLabelProperties, chartLegendProperties, getColumnData, createDomainMetadata  } from '../helpers';
@@ -163,6 +164,29 @@ export class ScatterPlotNode extends RenderNode {
         
         const renderData: any = { type: 'core:svg', content: svg };
         renderData._domain = createDomainMetadata(xMin, xMax, yMin, yMax);
+        
+        const _stateId = Math.random().toString(36).substring(7);
+        plotStateCache.set(_stateId, {
+            xScale,
+            yScale,
+            frame,
+            properties,
+                        isCategoricalX,
+            categoricalXLabels: isCategoricalX ? [...new Set(xData as string[])] : undefined,
+            seriesCount: 1,
+            renderOverlay: (nxScale: any, nyScale: any, nFrame: any, colorOffset: number, overlayProps: any) => {
+                let overlayColorFn = colorFn;
+                if (colorData.length === 0) {
+                    overlayColorFn = overlayProps['plotPrimaryColor'] || getSeriesColor(colorOffset, overlayProps);
+                }
+                return renderScatterPoints(
+                    xData, yData, nxScale, nyScale, sizeFn, overlayColorFn,
+                    properties['showLabels'], properties['labelColor'], properties['plotFontFamily'], properties['plotFontSize']
+                );
+            }
+        });
+        renderData._stateId = _stateId;
+        
         renderData._plotData = { xData, yDataSeries: [yData], seriesType: 'scatter', style: { sizeFn, colorFn, isCategoricalX } };
         return {
             Render: renderData,

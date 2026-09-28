@@ -1,3 +1,4 @@
+import { plotStateCache } from '../stateCache';
 import { RenderNode } from '@tracereactive/types';
 import { PlotCategory } from '../categories';
 import { createChartFrame, closeChartFrame } from '../svg/frame';
@@ -146,6 +147,66 @@ export class HeatmapDataNode extends RenderNode {
         
         const renderData: any = { type: 'core:svg', content: svg };
         renderData._domain = createDomainMetadata(0, colLabels.length, 0, rowLabels.length);
+        
+        const _stateId = Math.random().toString(36).substring(7);
+        plotStateCache.set(_stateId, {
+            frame,
+            properties,
+                        isCategoricalX: true,
+            categoricalXLabels: colLabels,
+            seriesCount: 1,
+            renderOverlay: (nxScale: any, nyScale: any, nFrame: any, colorOffset: number, overlayProps: any) => {
+                let overlaySvg = '';
+                const nCellW = nFrame.innerW / colLabels.length;
+                const nCellH = nFrame.innerH / rowLabels.length;
+                
+                let cellsSvg = '';
+                for (let c = 0; c < colLabels.length; c++) {
+                    const px = c * nCellW;
+                    for (let r = 0; r < rowLabels.length; r++) {
+                        const py = r * nCellH;
+                        const val = zData[c][r];
+                        
+                        if (!isNaN(val)) {
+                            const color = interpolateColor(val, zMin, zMax, colorLow, colorHigh);
+                            cellsSvg += `<rect x="${px}" y="${py}" width="${nCellW * 1.02}" height="${nCellH * 1.02}" fill="${color}" stroke="none" />`;
+                            
+                            if (properties['showValues']) {
+                                const rgb = hexToRgb(color) || { r: 128, g: 128, b: 128 };
+                                const lum = getLuminance(rgb.r, rgb.g, rgb.b);
+                                const textColor = lum > 128 ? '#000000' : '#ffffff';
+                                const textVal = Number.isInteger(val) ? val.toString() : parseFloat(val.toPrecision(3)).toString();
+                                
+                                cellsSvg += `<text x="${px + nCellW/2}" y="${py + nCellH/2}" fill="${textColor}" text-anchor="middle" dominant-baseline="middle" font-family="${fontFamily}" font-size="${fontSize * 0.9}px" opacity="0.8">${textVal}</text>`;
+                            }
+                        }
+                    }
+                }
+                overlaySvg += cellsSvg;
+                
+                // Row Labels
+                let yLabelsSvg = `<g font-family="${fontFamily}" font-size="${fontSize}" fill="${labelColor}">`;
+                for (let r = 0; r < rowLabels.length; r++) {
+                    const py = r * nCellH + nCellH / 2;
+                    yLabelsSvg += `<text x="-10" y="${py}" text-anchor="end" dominant-baseline="middle">${rowLabels[r]}</text>`;
+                }
+                yLabelsSvg += `</g>`;
+                overlaySvg += yLabelsSvg;
+                
+                // Col Labels
+                let xLabelsSvg = `<g font-family="${fontFamily}" font-size="${fontSize}" fill="${labelColor}" transform="translate(0, ${nFrame.innerH + 20})">`;
+                for (let c = 0; c < colLabels.length; c++) {
+                    const px = c * nCellW + nCellW / 2;
+                    xLabelsSvg += `<text x="0" y="0" transform="translate(${px}, 0) rotate(-45)" text-anchor="end">${colLabels[c]}</text>`;
+                }
+                xLabelsSvg += `</g>`;
+                overlaySvg += xLabelsSvg;
+                
+                return overlaySvg;
+            }
+        });
+        renderData._stateId = _stateId;
+        
         renderData._plotData = { xData: colLabels, yDataSeries: zData, rowLabels, seriesType: 'heatmap' };
         return {
             Render: renderData,

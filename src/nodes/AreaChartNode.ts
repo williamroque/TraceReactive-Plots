@@ -1,3 +1,4 @@
+import { plotStateCache } from '../stateCache';
 import { RenderNode } from '@tracereactive/types';
 import { PlotCategory } from '../categories';
 import { chartStyleProperties, chartAxisProperties, chartLabelProperties, chartLegendProperties, getColumnData, createDomainMetadata  } from '../helpers';
@@ -185,6 +186,41 @@ export class AreaChartNode extends RenderNode {
         
         const renderData: any = { type: 'core:svg', content: svg };
         renderData._domain = createDomainMetadata(xMin, xMax, yMin, yMax);
+        
+        const _stateId = Math.random().toString(36).substring(7);
+        plotStateCache.set(_stateId, {
+            xScale,
+            yScale,
+            frame,
+            properties,
+                        isCategoricalX,
+            categoricalXLabels: isCategoricalX ? [...new Set(xData as string[])] : undefined,
+            seriesCount: yDataSeries.length,
+            renderOverlay: (nxScale: any, nyScale: any, nFrame: any, colorOffset: number, overlayProps: any) => {
+                let overlaySvg = '';
+                const yOffsets = isStacked ? new Array(xData.length).fill(0) : undefined;
+                const lineOffsets = isStacked ? new Array(xData.length).fill(0) : undefined;
+                
+                yDataSeries.forEach((yData, i) => {
+                    const color = getSeriesColor(colorOffset + i, overlayProps);
+                    overlaySvg += renderArea(xData, yData, nxScale, nyScale, nFrame.innerH, color, opacity, yOffsets);
+                    
+                    if (isStacked && lineOffsets) {
+                        const stackedY = new Array(xData.length);
+                        for (let j = 0; j < xData.length; j++) {
+                            stackedY[j] = yData[j] + lineOffsets[j];
+                            lineOffsets[j] += yData[j];
+                        }
+                        overlaySvg += renderLinePath(xData, stackedY, nxScale, nyScale, color, lineWidth);
+                    } else {
+                        overlaySvg += renderLinePath(xData, yData, nxScale, nyScale, color, lineWidth);
+                    }
+                });
+                return overlaySvg;
+            }
+        });
+        renderData._stateId = _stateId;
+        
         renderData._plotData = { xData, yDataSeries, seriesType: 'area', style: { lineWidth, opacity, isStacked, isCategoricalX } };
         return {
             Render: renderData,

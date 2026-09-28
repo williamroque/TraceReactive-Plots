@@ -1,3 +1,4 @@
+import { plotStateCache } from '../stateCache';
 import { RenderNode } from '@tracereactive/types';
 import { PlotCategory } from '../categories';
 import { chartStyleProperties, chartAxisProperties, chartLabelProperties, chartLegendProperties, getColumnData, createDomainMetadata  } from '../helpers';
@@ -261,6 +262,52 @@ export class BarChartNode extends RenderNode {
         
         const renderData: any = { type: 'core:svg', content: svg };
         renderData._domain = createDomainMetadata(xMin, xMax, yMin, yMax);
+        
+        const _stateId = Math.random().toString(36).substring(7);
+        plotStateCache.set(_stateId, {
+            xScale,
+            yScale,
+            frame,
+            properties,
+                        isCategoricalX,
+            categoricalXLabels: isCategoricalX ? uniqueX : undefined,
+            seriesCount: groups.length || 1,
+            renderOverlay: (nxScale: any, nyScale: any, nFrame: any, colorOffset: number, overlayProps: any) => {
+                let overlaySvg = '';
+                const gap = Number(properties['barGap']) || 0.2;
+                let baseBarW = isCategoricalX ? (nFrame.innerW / uniqueX.length) : 20;
+                baseBarW *= (1 - gap);
+                
+                const yOffsets = isStacked ? new Array(uniqueX.length).fill(0) : undefined;
+                
+                yDataSeries.forEach((yData, i) => {
+                    let color: string | ((idx: number) => string);
+                    if (groups.length > 1) {
+                        color = getSeriesColor(colorOffset + i, overlayProps);
+                    } else {
+                        color = (idx: number) => getSeriesColor(colorOffset + idx, overlayProps);
+                    }
+                    
+                    let bw = baseBarW;
+                    let xOffset = 0;
+                    
+                    if (!isStacked && groups.length > 1) {
+                        bw = baseBarW / groups.length;
+                        xOffset = (i - groups.length / 2 + 0.5) * bw;
+                    }
+                    
+                    const errData = errDataSeries ? errDataSeries[i] : undefined;
+                    overlaySvg += renderBars(
+                        uniqueX, yData, nxScale, nyScale, nFrame.innerH, bw, color, xOffset, yOffsets, 
+                        Number(properties['plotBorderThickness'] || 0), properties['plotBorderColor'] || '#000000', errData,
+                        properties['showLabels'], properties['labelColor'], properties['plotFontFamily'], properties['plotFontSize']
+                    );
+                });
+                return overlaySvg;
+            }
+        });
+        renderData._stateId = _stateId;
+        
         renderData._plotData = { xData: uniqueX, yDataSeries, seriesType: 'bar', style: { isCategoricalX, isStacked, groups } };
         return {
             Render: renderData,
