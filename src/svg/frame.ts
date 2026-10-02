@@ -48,7 +48,10 @@ export function createChartFrame(config: ChartFrameConfig, properties?: Record<s
     const innerW = Math.max(10, totalW - margin.left - margin.right);
     const innerH = Math.max(10, totalH - margin.top - margin.bottom);
     
-    let svg = `<svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="max-width: 100%; max-height: 100%; object-fit: contain; background-color: ${config.backgroundColor};" xmlns="http://www.w3.org/2000/svg">`;
+    let svg = `<svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="max-width: 100%; max-height: 100%; object-fit: contain;" xmlns="http://www.w3.org/2000/svg">`;
+    if (config.backgroundColor && config.backgroundColor !== 'transparent' && config.backgroundColor !== 'rgba(0,0,0,0)' && config.backgroundColor !== '#00000000') {
+        svg += `<rect width="100%" height="100%" fill="${config.backgroundColor}" />`;
+    }
     svg += `<g class="main-group" transform="translate(${margin.left},${margin.top})">`;
     
     return { svg, innerW, innerH, margin, totalW, totalH };
