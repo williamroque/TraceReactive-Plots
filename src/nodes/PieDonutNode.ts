@@ -50,7 +50,7 @@ export class PieDonutNode extends RenderNode {
         const total = values.reduce((sum, val) => sum + (val > 0 ? val : 0), 0);
         if (total === 0) return {};
 
-        const totalW = 500;
+        const totalW = 600;
         const totalH = 500; // Force square
         
         const margin = { top: 40, right: 40, bottom: 40, left: 40 };

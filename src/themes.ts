@@ -27,7 +27,11 @@ export const PlotThemeSections: ThemeSection[] = [
             },
             { key: 'plotFontSize', label: 'Font size', type: 'number', defaultValue: '11', section: 'Plots: General', packageId: 'com.tracereactive.plots' },
             { key: 'plotTitleFontSize', label: 'Title font size', type: 'number', defaultValue: '14', section: 'Plots: General', packageId: 'com.tracereactive.plots' },
-            { key: 'plotLabelColor', label: 'Label color', type: 'color', defaultValue: '#999999', section: 'Plots: General', packageId: 'com.tracereactive.plots' }
+            { key: 'plotLabelColor', label: 'Label color', type: 'color', defaultValue: '#999999', section: 'Plots: General', packageId: 'com.tracereactive.plots' },
+            { key: 'plotMarginTop', label: 'Margin top', type: 'number', defaultValue: '60', section: 'Plots: General', packageId: 'com.tracereactive.plots' },
+            { key: 'plotMarginRight', label: 'Margin right', type: 'number', defaultValue: '30', section: 'Plots: General', packageId: 'com.tracereactive.plots' },
+            { key: 'plotMarginBottom', label: 'Margin bottom', type: 'number', defaultValue: '60', section: 'Plots: General', packageId: 'com.tracereactive.plots' },
+            { key: 'plotMarginLeft', label: 'Margin left', type: 'number', defaultValue: '70', section: 'Plots: General', packageId: 'com.tracereactive.plots' }
         ]
     },
     {

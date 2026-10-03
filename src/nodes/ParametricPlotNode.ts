@@ -85,7 +85,7 @@ export class ParametricPlotNode extends RenderNode {
         if (validX.length === 0 || validY.length === 0) return {};
 
         const aspectRatio = Number(properties['aspectRatio']) || 1.0;
-        const totalW = 500;
+        const totalW = 600;
         const totalH = totalW / aspectRatio;
         
         const padding = Number(properties['plotRangePadding'] ?? 0.05);

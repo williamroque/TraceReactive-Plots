@@ -56,7 +56,7 @@ export class ScatterPlotNode extends RenderNode {
         const colorData = colorCol ? getColumnData(data, colorCol).map(v => Number(v)) : [];
 
         const aspectRatio = Number(properties['aspectRatio']) || 1.0;
-        const totalW = 500;
+        const totalW = 600;
         const totalH = totalW / aspectRatio;
         
         const isCategoricalX = typeof xDataRaw[0] === 'string' || typeof xDataRaw[0] === 'boolean';

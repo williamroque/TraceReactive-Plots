@@ -57,7 +57,7 @@ export class QQPlotNode extends RenderNode {
         const [xMin, xMax] = computeNiceDomain(xData, padding);
         const [yMin, yMax] = computeNiceDomain(yData, padding);
         
-        const totalW = 500;
+        const totalW = 600;
         const totalH = 500;
         
         const frame = createChartFrame({

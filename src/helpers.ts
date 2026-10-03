@@ -14,7 +14,11 @@ export const chartStyleProperties: PropertyDefinition[] = [
     { name: 'plotFontFamily', label: 'Font family', type: 'style', styleType: 'font', category: 'style', defaultValue: 'theme:com.tracereactive.plots.plotFontFamily' },
     { name: 'plotFontSize', label: 'Font size', type: 'style', styleType: 'size', category: 'style', defaultValue: 'theme:com.tracereactive.plots.plotFontSize' },
     { name: 'plotTitleFontSize', label: 'Title font size', type: 'style', styleType: 'size', category: 'style', defaultValue: 'theme:com.tracereactive.plots.plotTitleFontSize' },
-    { name: 'plotPalette', label: 'Color Palette', type: 'style', styleType: 'palette', category: 'style', defaultValue: 'theme:com.tracereactive.plots.plotPalette' }
+    { name: 'plotPalette', label: 'Color Palette', type: 'style', styleType: 'palette', category: 'style', defaultValue: 'theme:com.tracereactive.plots.plotPalette' },
+    { name: 'plotMarginTop', label: 'Margin Top', type: 'style', styleType: 'size', category: 'style', defaultValue: 'theme:com.tracereactive.plots.plotMarginTop' },
+    { name: 'plotMarginRight', label: 'Margin Right', type: 'style', styleType: 'size', category: 'style', defaultValue: 'theme:com.tracereactive.plots.plotMarginRight' },
+    { name: 'plotMarginBottom', label: 'Margin Bottom', type: 'style', styleType: 'size', category: 'style', defaultValue: 'theme:com.tracereactive.plots.plotMarginBottom' },
+    { name: 'plotMarginLeft', label: 'Margin Left', type: 'style', styleType: 'size', category: 'style', defaultValue: 'theme:com.tracereactive.plots.plotMarginLeft' }
 ];
 
 export const chartAxisProperties: PropertyDefinition[] = [
@@ -37,11 +41,6 @@ export function getColumnData(data: any, columnName: string): any[] {
         return data.map(row => row[columnName]);
     }
     
-    // If it's an Arquero table (serialized or live)
-    // When serialized via IPC, the data usually arrives as { __arqueroData: [...] }
-    // Or if Arquero is used to recreate it, we'd use aq.from(data).array(columnName)
-    // Since we don't want to deserialize the whole Arquero object just to get one column,
-    // we check if it's the serialized form:
     if (data.__arqueroData && Array.isArray(data.__arqueroData)) {
         return data.__arqueroData.map((row: any) => row[columnName]);
     }

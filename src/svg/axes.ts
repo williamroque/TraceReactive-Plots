@@ -13,6 +13,7 @@ export interface AxisConfig {
     showGrid?: boolean;
     thousandsSeparator?: string;
     label?: string;
+    labelFontSize?: number;
 }
 
 import { renderLabel } from './latex';
@@ -51,11 +52,12 @@ export function renderXAxis(config: AxisConfig): string {
     
     // Axis Label
     if (config.label) {
+        const labelFontSize = config.labelFontSize || config.fontSize;
         const labelY = 10 + config.fontSize * 1.5 + 5;
         svg += renderLabel(config.label, config.innerW / 2, labelY, {
             color: config.axisColor,
             fontFamily: safeFont,
-            fontSize: config.fontSize * 1.1,
+            fontSize: labelFontSize,
             align: 'middle',
             baseline: 'hanging'
         });
@@ -106,12 +108,13 @@ export function renderYAxis(config: AxisConfig): string {
     
     // Axis Label
     if (config.label) {
+        const labelFontSize = config.labelFontSize || config.fontSize;
         const tickWidthEst = Math.max(config.fontSize * 1.5, maxTickChars * config.fontSize * 0.6);
         const xOffset = -10 - tickWidthEst - 15; // 15px padding to be safe
         svg += renderLabel(config.label, xOffset, config.innerH / 2, {
             color: config.axisColor,
             fontFamily: safeFont,
-            fontSize: config.fontSize * 1.1,
+            fontSize: labelFontSize,
             align: 'middle',
             baseline: 'middle',
             rotation: -90
